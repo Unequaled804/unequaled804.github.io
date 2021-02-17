@@ -1,0 +1,841 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" type="image/png" href="/img/favicon.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="Unequaled804">
+  <meta name="keywords" content="">
+  <title>SSH密钥登录设置 - Unequaled804</title>
+
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.staticfile.org/highlight.js/10.0.0/styles/github-gist.min.css" />
+    
+  
+
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_pf9vaxs7x7b.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.2.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Unequaled804</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" href="javascript:">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner intro-2" id="background" parallax=true
+         style="background: url('/img/banner.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="container page-header text-center fade-in-up">
+            <span class="h2" id="subtitle">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-02-16 12:47" pubdate>
+        2021年2月16日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.8k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      22
+       分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-post-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-post-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-md">
+      <div class="container nopadding-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto" id="post">
+            <!-- SEO header -->
+            <h1 style="display: none">SSH密钥登录设置</h1>
+            
+            <div class="markdown-body" id="post-body">
+              <h1 id="background"><a class="markdownIt-Anchor" href="#background"></a> Background</h1>
+<p>在我们使用远程服务器的过程中，使用传统密码登录不仅繁琐而且密码也容易被破解，而密钥登录基本杜绝了这种风险，并且登录更加方便（可以不用输密码）。</p>
+<p>SSH密钥使用了RSA非对称加密算法，在通信的过程使用一对密钥：<strong>公钥</strong>和<strong>私钥</strong>来对消息进行加密。其中公钥对所有人都可见，是公开的；私钥是私密的，公钥加密的信息只有对应的私钥才能打开（解密）。这种特殊的加密解密方式解决了对称加密算法中的密钥的保存和传递问题（如何安全地让通信双方都知道同一个加密方式而不被其他人获取）。具体技术细节在这里不再赘述，感兴趣的朋友可以看看阮一峰老师的博客<a target="_blank" rel="noopener" href="https://www.ruanyifeng.com/blog/2013/06/rsa_algorithm_part_one.html">阮一峰的网络日志 - RSA算法原理（一）</a>。</p>
+<p>接下来笔者将会介绍如何在本地和远程服务器进行设置，实现SSH密钥登录。</p>
+<p>示例环境</p>
+<ul>
+<li>本地环境：macOS 11.2</li>
+<li>远程环境：centOS 8.3.2011</li>
+</ul>
+<h1 id="1-本地生成公钥-私钥对"><a class="markdownIt-Anchor" href="#1-本地生成公钥-私钥对"></a> 1. 本地生成公钥-私钥对</h1>
+<p>macOS中的SSH密钥一般保存在用户文件夹下的<code>.ssh</code>文件夹，即<code>/User/yourname/.ssh</code>或<code>~/.ssh</code>。</p>
+<p>首先在命令行使用<code>ssh-keygen</code>工具在本地生成公钥私钥对，根据提示设置密钥文件名，密码短语。</p>
+<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-keygen -C <span class="hljs-string">&quot;密钥对的注释&quot;</span></span>
+Enter file in which to save the key (/Users/yourname/.ssh/id_rsa): id_rsa_demo
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in id_rsa_demo.
+Your public key has been saved in id_rsa_demo.pub.
+The key fingerprint is:
+SHA256:VKrYi4a9HrDAoUoTQTUsQlXwn+IASQbamGw74EJIshE 密钥对的注释
+The key&#x27;s randomart image is:
++---[RSA 3072]----+
+|EO+=o.    .      |
+|XBo.o    o       |
+|OOo  .  o        |
+|B =  o.o.        |
+|+B....ooS        |
+|+.o=o...         |
+|. o =..          |
+|   . o           |
+|   .o            |
++----[SHA256]-----+</code></pre>
+<p>这里需要注意几点：</p>
+<ol>
+<li><strong>注释</strong>：<code>-C</code> 和后面字符串是密钥对的注释，非必需。不写默认为系统当前用户名，一般填邮箱或者创建者信息。</li>
+<li><strong>密钥文件名</strong>：留空则为默认<code>/Users/yourname/.ssh/id_rsa</code>，直接填写文件名会保存在当前目录。注意，如果要保存到其他目录请填写绝对路径！例如<code>/Users/yourname/Documents/id_rsa</code>，填写<code>~/Documents/id_rsa</code>会报错。</li>
+<li><strong>密码短语</strong>：<code>passphrase</code>相当于用一个自定义密码来保护私钥，一旦私钥泄露还有一个密码作为最后一道防线，设置后每次登录需要填（也可加到缓存中不用这么麻烦，稍后会讲）。</li>
+</ol>
+<p>密钥对生成之后，其所在目录会生成两个新文件。在本示例中生成的公钥为<code>id_rsa_demo.pub</code>，对应的私钥为<code>id_rsa_demo</code>。密钥默认采用RSA，密钥大小为3072位。如果想生成更强密钥可在生成时添加<code>-b 位数</code>参数指定密钥位数，最高16384。</p>
+<h1 id="2-上传公钥至远程服务器"><a class="markdownIt-Anchor" href="#2-上传公钥至远程服务器"></a> 2. 上传公钥至远程服务器</h1>
+<blockquote>
+<p>假如你使用的是腾讯云、阿里云这样的主机商，一般可以直接在控制台内添加SSH密钥，可以跳过这步，参考主机商对应配置文档进行设置。</p>
+</blockquote>
+<p>上传需要使用<code>ssh-copy-id</code>,格式如下：</p>
+<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-copy-id -i 本地公钥文件路径 远程主机用户名@远程主机域名或IP -p 远程主机SSH端口号 <span class="hljs-comment"># 如果是默认22端口, -p可以省略</span></span></code></pre>
+<p>假如我们的主机是<code>123.45.67.89</code>，用户名为<code>user</code>，SSH端口为<code>2222</code>：</p>
+<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-copy-id -i ~/.ssh/id_rsa_demo user@123.45.67.89 -p 2222</span>
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: &quot;/Users/yourname/.ssh/id_rsa_demo.pub&quot;
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+user@123.45.67.89&#x27;s password:
+
+Number of key(s) added:        1
+
+Now try logging into the machine, with:   &quot;ssh -p &#x27;2222&#x27; &#x27;user@123.45.67.89&#x27;&quot;
+and check to make sure that only the key(s) you wanted were added.</code></pre>
+<p>过程中需要输入私钥密码短语（如设置过）以及远程主机密码。</p>
+<p>如果上传成功，我们会在远程主机的如下文件中看到和我们在本地生成的公钥的内容。</p>
+<pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> cat ~/.ssh/authorized_keys</span></code></pre>
+<blockquote>
+<p>其实还有另一个方法就是手动将公钥内容粘贴至<code>authorized_keys</code>中 <s>（虽然没上面这个高端哈）</s>。</p>
+</blockquote>
+<h1 id="3-远程服务器配置sshd"><a class="markdownIt-Anchor" href="#3-远程服务器配置sshd"></a> 3. 远程服务器配置sshd</h1>
+<p>修改以下文件：</p>
+<pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> vim /etc/ssh/sshd_config</span></code></pre>
+<p>修改文件中如下部分配置为：</p>
+<pre><code class="hljs bash">PubkeyAuthentication yes    <span class="hljs-comment">#设置公钥鉴权</span>
+PermitRootLogin yes         <span class="hljs-comment">#设置Root用户可通过SSH登录 </span>
+PasswordAuthentication no   <span class="hljs-comment">#关闭密码登录</span></code></pre>
+<p>设置完毕后重启sshd服务即可。</p>
+<pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> systemctl restart sshd.service</span></code></pre>
+<p>至此所有SSH密钥的登录的基本配置，再次远程主机登录即可直接使用SSH密钥。</p>
+<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh -i 本地公钥文件路径 远程主机用户名@远程主机域名或IP -p 远程主机SSH端口号</span></code></pre>
+<blockquote>
+<p>注意：如果仍然出现错误提示<code>Permission denied (publickey,gssapi-keyex,gssapi-with-mic).</code>请检查用户名是否正确。之前实验的时候笔者用主机商设置的的默认用户就无法登陆，改为root用户即可正常使用。</p>
+</blockquote>
+<p>不过虽然密码登录不用了，但是每次登录还是要输很多东西，而且配置了密码短语的私钥还是要输入密码，这可怎么办呢？</p>
+<h1 id="4-本地ssh-config-ssh-agent设置"><a class="markdownIt-Anchor" href="#4-本地ssh-config-ssh-agent设置"></a> 4. 本地SSH Config &amp; ssh-agent设置</h1>
+<p>我们可以进行如下设置来解决上述问题。</p>
+<p>在本地修改或创建如下配置文件：</p>
+<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> vim ~/.ssh/config</span></code></pre>
+<p>加入以下内容</p>
+<pre><code class="hljs bash">Host 主机别名
+    Hostname 主机域名或IP
+    User 用户名
+    Port 远程主机SSH端口号 <span class="hljs-comment">#不写这行默认22</span>
+    IdentityFile 本地私钥路径
+    AddKeysToAgent no(default)/confirm/ask/yes <span class="hljs-comment">#如果填yes,自动将私钥加入ssh-agent，不用每次都输私钥密码</span></code></pre>
+<p>在上述例子中即为</p>
+<pre><code class="hljs routeros">Host myhost
+    Hostname 123.45.67.89
+   <span class="hljs-built_in"> User </span>user
+   <span class="hljs-built_in"> Port </span>2222
+    IdentityFile ~/.ssh/id_rsa_demo
+    AddKeysToAgent <span class="hljs-literal">yes</span></code></pre>
+<p>以后直接填写<code>ssh myhost</code>，即可完成连接（第一次要输私钥密码）</p>
+<p>更多配置请参考<a target="_blank" rel="noopener" href="https://deepzz.com/post/how-to-setup-ssh-config.html">Deepzz - SSH Config 那些你所知道和不知道的事</a></p>
+<hr />
+<p>除了通过在SSH Config中添加<code>AddKeysToAgent</code>字段，还可以在命令行中输入以下命令，来将私钥添加至<code>ssh-agent</code>缓存：</p>
+<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-add ~/.ssh/your_private_key</span>
+Enter passphrase for /Users/your_name/.ssh/your_private_key: #输入密码
+Identity added: /Users/your_name/.ssh/your_private_key</code></pre>
+<p>如果需要删除缓存中的私钥，恢复每次登陆都输密码的模式，在上述命令后加<code>-d</code>参数即可。</p>
+<h1 id="reference"><a class="markdownIt-Anchor" href="#reference"></a> Reference</h1>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.ruanyifeng.com/blog/2013/06/rsa_algorithm_part_one.html">阮一峰的网络日志 - RSA算法原理（一）</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/28423720">知乎专栏 - SSH 免密登录是怎么玩儿的?<br />
+</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.runoob.com/w3cnote/set-ssh-login-key.html">Runoob - 设置 SSH 通过密钥登录</a></li>
+<li><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/SSH_keys_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)">Archlinux Wiki - SSH keys</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.github.com/cn/github/authenticating-to-github/working-with-ssh-key-passphrases">GitHub Docs - 添加或更改SSH密钥密码</a></li>
+<li><a target="_blank" rel="noopener" href="https://deepzz.com/post/how-to-setup-ssh-config.html">Deepzz - SSH Config 那些你所知道和不知道的事</a></li>
+</ul>
+<h1 id="future-direction"><a class="markdownIt-Anchor" href="#future-direction"></a> Future Direction</h1>
+<p>虽然SSH密钥登录相比于传统密码登录已经在安全性和方便性上提高了很多，但仍有一些不足，比如对于人多设备多的大型机构，如果有人员变动需要在所有服务器上删除该人员的公钥。SSH证书登录则解决了这种问题，并且更易管理、扩展性更强、安全性更高。参见<a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2020/07/ssh-certificate.html">阮一峰的网络日志 - SSH 证书登录教程</a>。</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/%E5%B0%8F%E7%99%BD%E8%8F%9C%E7%9A%84%E5%BB%BA%E7%AB%99%E4%B9%8B%E8%B7%AF/">小白菜的建站之路</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
+                    
+                      <a class="hover-with-bg" href="/tags/Terminal/">Terminal</a>
+                    
+                      <a class="hover-with-bg" href="/tags/SSH/">SSH</a>
+                    
+                      <a class="hover-with-bg" href="/tags/Linux/">Linux</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E8%BF%90%E7%BB%B4/">运维</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/">服务器</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/">网络安全</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/">信息安全</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！</p>
+              
+              
+                <div class="post-prevnext row">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/01/21/How-to-Set-Pr0xy-for-Terminal-on-macOS/">
+                        <span class="hidden-mobile">How to Set Pr0xy for Terminal on macOS</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div id="tocbot"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+  </main>
+
+  
+    <a id="scroll-top-button" href="#" role="button">
+      <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+    </a>
+  
+
+  
+    <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+
+  
+
+  
+
+  <footer class="mt-5">
+  <div class="text-center py-3">
+    <div>
+      <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a>
+      <i class="iconfont icon-love"></i>
+      <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener">
+        <span>Fluid</span></a>
+    </div>
+    
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+    
+
+    
+  </div>
+</footer>
+
+<!-- SCRIPTS -->
+<script  src="https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js" ></script>
+<script  src="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/js/bootstrap.min.js" ></script>
+<script  src="/js/debouncer.js" ></script>
+<script  src="/js/main.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script defer src="https://cdn.staticfile.org/clipboard.js/2.0.6/clipboard.min.js" ></script>
+  <script  src="/js/clipboard-use.js" ></script>
+
+
+
+  <script defer>
+  (function () {
+    // 查询存储的记录
+    function getRecord(Counter, target) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({target})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {target, time: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    }
+
+    // 发起自增请求
+    function increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    }
+
+    // 构建自增请求体
+    function buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "time": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    }
+
+    // 校验是否为有效的 UV
+    function validUV() {
+      var key = 'LeanCloud_UV_Flag';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    }
+
+    function addCount(Counter) {
+      var enableIncr = 'true' === 'true' && window.location.hostname !== 'localhost';
+      var getterArr = [];
+      var incrArr = [];
+
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#leancloud-site-pv-container');
+      if (pvCtn || enableIncr) {
+        var pvGetter = getRecord(Counter, 'site-pv').then((record) => {
+          incrArr.push(buildIncrement(record.objectId))
+          var ele = document.querySelector('#leancloud-site-pv');
+          if (ele) {
+            ele.innerText = record.time + 1;
+            if (pvCtn) {
+              pvCtn.style.display = 'inline';
+            }
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#leancloud-site-uv-container');
+      if (uvCtn || enableIncr) {
+        var uvGetter = getRecord(Counter, 'site-uv').then((record) => {
+          var vuv = validUV();
+          vuv && incrArr.push(buildIncrement(record.objectId))
+          var ele = document.querySelector('#leancloud-site-uv');
+          if (ele) {
+            ele.innerText = record.time + (vuv ? 1 : 0);
+            if (uvCtn) {
+              uvCtn.style.display = 'inline';
+            }
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 如果是文章，请求文章的浏览数，并自增
+      if ('true' === 'true') {
+        var viewCtn = document.querySelector('#leancloud-post-views-container');
+        if (viewCtn || enableIncr) {
+          var target = decodeURI('/2021/02/16/SSH%E5%AF%86%E9%92%A5%E7%99%BB%E5%BD%95%E8%AE%BE%E7%BD%AE/');
+          var viewGetter = getRecord(Counter, target).then((record) => {
+            incrArr.push(buildIncrement(record.objectId))
+            if (viewCtn) {
+              var ele = document.querySelector('#leancloud-post-views');
+              if (ele) {
+                ele.innerText = (record.time || 0) + 1;
+                viewCtn.style.display = 'inline';
+              }
+            }
+          });
+          getterArr.push(viewGetter);
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && increment(Counter, incrArr);
+        })
+      }
+    }
+
+    var app_id = 'g1cx4qFzMwxLpb0ioyo12kqh-gzGzoHsz'
+    var app_key = 'DQqHuAD1hLXwsTF5IBB3K6dH'
+    var server_url = 'https://g1cx4qfz.lc-cn-n1-shared.com'
+
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': app_id,
+            'X-LC-Key': app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+
+      addCount(Counter);
+    }
+
+    var api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${ app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(resp => resp.json())
+        .then(({api_server}) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+
+
+
+
+  <script  src="https://cdn.staticfile.org/tocbot/4.11.1/tocbot.min.js" ></script>
+  <script>
+    $(document).ready(function () {
+      var boardCtn = $('#board-ctn');
+      var boardTop = boardCtn.offset().top;
+
+      tocbot.init({
+        tocSelector: '#tocbot',
+        contentSelector: '#post-body',
+        headingSelector: 'h1,h2,h3,h4,h5,h6',
+        linkClass: 'tocbot-link',
+        activeLinkClass: 'tocbot-active-link',
+        listClass: 'tocbot-list',
+        isCollapsedClass: 'tocbot-is-collapsed',
+        collapsibleClass: 'tocbot-is-collapsible',
+        collapseDepth: 0,
+        scrollSmooth: true,
+        headingsOffset: -boardTop
+      });
+      if ($('.toc-list-item').length > 0) {
+        $('#toc').css('visibility', 'visible');
+      }
+    });
+  </script>
+
+
+
+  <script  src="https://cdn.staticfile.org/typed.js/2.0.11/typed.min.js" ></script>
+  <script>
+    var typed = new Typed('#subtitle', {
+      strings: [
+        '  ',
+        "SSH密钥登录设置&nbsp;",
+      ],
+      cursorChar: "_",
+      typeSpeed: 70,
+      loop: false,
+    });
+    typed.stop();
+    $(document).ready(function () {
+      $(".typed-cursor").addClass("h2");
+      typed.start();
+    });
+  </script>
+
+
+
+  <script  src="https://cdn.staticfile.org/anchor-js/4.2.2/anchor.min.js" ></script>
+  <script>
+    anchors.options = {
+      placement: "right",
+      visible: "hover",
+      
+    };
+    var el = "h1,h2,h3,h4,h5,h6".split(",");
+    var res = [];
+    for (item of el) {
+      res.push(".markdown-body > " + item)
+    }
+    anchors.add(res.join(", "))
+  </script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+  <script>
+    var path = "/local-search.xml";
+    var inputArea = document.querySelector("#local-search-input");
+    inputArea.onclick = function () {
+      searchFunc(path, 'local-search-input', 'local-search-result');
+      this.onclick = null
+    }
+  </script>
+
+
+
+  <script  src="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <script>
+    $('#post img:not(.no-zoom img, img[no-zoom]), img[zoom]').each(
+      function () {
+        var element = document.createElement('a');
+        $(element).attr('data-fancybox', 'images');
+        $(element).attr('href', $(this).attr('src'));
+        $(this).wrap(element);
+      }
+    );
+  </script>
+
+
+
+
+
+  
+
+  
+    <!-- KaTeX -->
+    <link  rel="stylesheet" href="https://cdn.staticfile.org/KaTeX/0.11.1/katex.min.css" />
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+</body>
+</html>

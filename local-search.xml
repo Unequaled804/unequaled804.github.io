@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  
+  
+  
+  <entry>
+    <title>SSH密钥登录设置</title>
+    <link href="/2021/02/16/SSH%E5%AF%86%E9%92%A5%E7%99%BB%E5%BD%95%E8%AE%BE%E7%BD%AE/"/>
+    <url>/2021/02/16/SSH%E5%AF%86%E9%92%A5%E7%99%BB%E5%BD%95%E8%AE%BE%E7%BD%AE/</url>
+    
+    <content type="html"><![CDATA[<h1 id="background"><a class="markdownIt-Anchor" href="#background"></a> Background</h1><p>在我们使用远程服务器的过程中，使用传统密码登录不仅繁琐而且密码也容易被破解，而密钥登录基本杜绝了这种风险，并且登录更加方便（可以不用输密码）。</p><p>SSH密钥使用了RSA非对称加密算法，在通信的过程使用一对密钥：<strong>公钥</strong>和<strong>私钥</strong>来对消息进行加密。其中公钥对所有人都可见，是公开的；私钥是私密的，公钥加密的信息只有对应的私钥才能打开（解密）。这种特殊的加密解密方式解决了对称加密算法中的密钥的保存和传递问题（如何安全地让通信双方都知道同一个加密方式而不被其他人获取）。具体技术细节在这里不再赘述，感兴趣的朋友可以看看阮一峰老师的博客<a href="https://www.ruanyifeng.com/blog/2013/06/rsa_algorithm_part_one.html">阮一峰的网络日志 - RSA算法原理（一）</a>。</p><p>接下来笔者将会介绍如何在本地和远程服务器进行设置，实现SSH密钥登录。</p><p>示例环境</p><ul><li>本地环境：macOS 11.2</li><li>远程环境：centOS 8.3.2011</li></ul><h1 id="1-本地生成公钥-私钥对"><a class="markdownIt-Anchor" href="#1-本地生成公钥-私钥对"></a> 1. 本地生成公钥-私钥对</h1><p>macOS中的SSH密钥一般保存在用户文件夹下的<code>.ssh</code>文件夹，即<code>/User/yourname/.ssh</code>或<code>~/.ssh</code>。</p><p>首先在命令行使用<code>ssh-keygen</code>工具在本地生成公钥私钥对，根据提示设置密钥文件名，密码短语。</p><pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-keygen -C <span class="hljs-string">&quot;密钥对的注释&quot;</span></span>Enter file in which to save the key (/Users/yourname/.ssh/id_rsa): id_rsa_demoEnter passphrase (empty for no passphrase):Enter same passphrase again:Your identification has been saved in id_rsa_demo.Your public key has been saved in id_rsa_demo.pub.The key fingerprint is:SHA256:VKrYi4a9HrDAoUoTQTUsQlXwn+IASQbamGw74EJIshE 密钥对的注释The key&#x27;s randomart image is:+---[RSA 3072]----+|EO+=o.    .      ||XBo.o    o       ||OOo  .  o        ||B =  o.o.        ||+B....ooS        ||+.o=o...         ||. o =..          ||   . o           ||   .o            |+----[SHA256]-----+</code></pre><p>这里需要注意几点：</p><ol><li><strong>注释</strong>：<code>-C</code> 和后面字符串是密钥对的注释，非必需。不写默认为系统当前用户名，一般填邮箱或者创建者信息。</li><li><strong>密钥文件名</strong>：留空则为默认<code>/Users/yourname/.ssh/id_rsa</code>，直接填写文件名会保存在当前目录。注意，如果要保存到其他目录请填写绝对路径！例如<code>/Users/yourname/Documents/id_rsa</code>，填写<code>~/Documents/id_rsa</code>会报错。</li><li><strong>密码短语</strong>：<code>passphrase</code>相当于用一个自定义密码来保护私钥，一旦私钥泄露还有一个密码作为最后一道防线，设置后每次登录需要填（也可加到缓存中不用这么麻烦，稍后会讲）。</li></ol><p>密钥对生成之后，其所在目录会生成两个新文件。在本示例中生成的公钥为<code>id_rsa_demo.pub</code>，对应的私钥为<code>id_rsa_demo</code>。密钥默认采用RSA，密钥大小为3072位。如果想生成更强密钥可在生成时添加<code>-b 位数</code>参数指定密钥位数，最高16384。</p><h1 id="2-上传公钥至远程服务器"><a class="markdownIt-Anchor" href="#2-上传公钥至远程服务器"></a> 2. 上传公钥至远程服务器</h1><blockquote><p>假如你使用的是腾讯云、阿里云这样的主机商，一般可以直接在控制台内添加SSH密钥，可以跳过这步，参考主机商对应配置文档进行设置。</p></blockquote><p>上传需要使用<code>ssh-copy-id</code>,格式如下：</p><pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-copy-id -i 本地公钥文件路径 远程主机用户名@远程主机域名或IP -p 远程主机SSH端口号 <span class="hljs-comment"># 如果是默认22端口, -p可以省略</span></span></code></pre><p>假如我们的主机是<code>123.45.67.89</code>，用户名为<code>user</code>，SSH端口为<code>2222</code>：</p><pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-copy-id -i ~/.ssh/id_rsa_demo user@123.45.67.89 -p 2222</span>/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: &quot;/Users/yourname/.ssh/id_rsa_demo.pub&quot;/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keysuser@123.45.67.89&#x27;s password:Number of key(s) added:        1Now try logging into the machine, with:   &quot;ssh -p &#x27;2222&#x27; &#x27;user@123.45.67.89&#x27;&quot;and check to make sure that only the key(s) you wanted were added.</code></pre><p>过程中需要输入私钥密码短语（如设置过）以及远程主机密码。</p><p>如果上传成功，我们会在远程主机的如下文件中看到和我们在本地生成的公钥的内容。</p><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> cat ~/.ssh/authorized_keys</span></code></pre><blockquote><p>其实还有另一个方法就是手动将公钥内容粘贴至<code>authorized_keys</code>中 <s>（虽然没上面这个高端哈）</s>。</p></blockquote><h1 id="3-远程服务器配置sshd"><a class="markdownIt-Anchor" href="#3-远程服务器配置sshd"></a> 3. 远程服务器配置sshd</h1><p>修改以下文件：</p><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> vim /etc/ssh/sshd_config</span></code></pre><p>修改文件中如下部分配置为：</p><pre><code class="hljs bash">PubkeyAuthentication yes    <span class="hljs-comment">#设置公钥鉴权</span>PermitRootLogin yes         <span class="hljs-comment">#设置Root用户可通过SSH登录 </span>PasswordAuthentication no   <span class="hljs-comment">#关闭密码登录</span></code></pre><p>设置完毕后重启sshd服务即可。</p><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> systemctl restart sshd.service</span></code></pre><p>至此所有SSH密钥的登录的基本配置，再次远程主机登录即可直接使用SSH密钥。</p><pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh -i 本地公钥文件路径 远程主机用户名@远程主机域名或IP -p 远程主机SSH端口号</span></code></pre><blockquote><p>注意：如果仍然出现错误提示<code>Permission denied (publickey,gssapi-keyex,gssapi-with-mic).</code>请检查用户名是否正确。之前实验的时候笔者用主机商设置的的默认用户就无法登陆，改为root用户即可正常使用。</p></blockquote><p>不过虽然密码登录不用了，但是每次登录还是要输很多东西，而且配置了密码短语的私钥还是要输入密码，这可怎么办呢？</p><h1 id="4-本地ssh-config-ssh-agent设置"><a class="markdownIt-Anchor" href="#4-本地ssh-config-ssh-agent设置"></a> 4. 本地SSH Config &amp; ssh-agent设置</h1><p>我们可以进行如下设置来解决上述问题。</p><p>在本地修改或创建如下配置文件：</p><pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> vim ~/.ssh/config</span></code></pre><p>加入以下内容</p><pre><code class="hljs bash">Host 主机别名    Hostname 主机域名或IP    User 用户名    Port 远程主机SSH端口号 <span class="hljs-comment">#不写这行默认22</span>    IdentityFile 本地私钥路径    AddKeysToAgent no(default)/confirm/ask/yes <span class="hljs-comment">#如果填yes,自动将私钥加入ssh-agent，不用每次都输私钥密码</span></code></pre><p>在上述例子中即为</p><pre><code class="hljs routeros">Host myhost    Hostname 123.45.67.89   <span class="hljs-built_in"> User </span>user   <span class="hljs-built_in"> Port </span>2222    IdentityFile ~/.ssh/id_rsa_demo    AddKeysToAgent <span class="hljs-literal">yes</span></code></pre><p>以后直接填写<code>ssh myhost</code>，即可完成连接（第一次要输私钥密码）</p><p>更多配置请参考<a href="https://deepzz.com/post/how-to-setup-ssh-config.html">Deepzz - SSH Config 那些你所知道和不知道的事</a></p><hr /><p>除了通过在SSH Config中添加<code>AddKeysToAgent</code>字段，还可以在命令行中输入以下命令，来将私钥添加至<code>ssh-agent</code>缓存：</p><pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-add ~/.ssh/your_private_key</span>Enter passphrase for /Users/your_name/.ssh/your_private_key: #输入密码Identity added: /Users/your_name/.ssh/your_private_key</code></pre><p>如果需要删除缓存中的私钥，恢复每次登陆都输密码的模式，在上述命令后加<code>-d</code>参数即可。</p><h1 id="reference"><a class="markdownIt-Anchor" href="#reference"></a> Reference</h1><ul><li><a href="https://www.ruanyifeng.com/blog/2013/06/rsa_algorithm_part_one.html">阮一峰的网络日志 - RSA算法原理（一）</a></li><li><a href="https://zhuanlan.zhihu.com/p/28423720">知乎专栏 - SSH 免密登录是怎么玩儿的?<br /></a></li><li><a href="https://www.runoob.com/w3cnote/set-ssh-login-key.html">Runoob - 设置 SSH 通过密钥登录</a></li><li><a href="https://wiki.archlinux.org/index.php/SSH_keys_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)">Archlinux Wiki - SSH keys</a></li><li><a href="https://docs.github.com/cn/github/authenticating-to-github/working-with-ssh-key-passphrases">GitHub Docs - 添加或更改SSH密钥密码</a></li><li><a href="https://deepzz.com/post/how-to-setup-ssh-config.html">Deepzz - SSH Config 那些你所知道和不知道的事</a></li></ul><h1 id="future-direction"><a class="markdownIt-Anchor" href="#future-direction"></a> Future Direction</h1><p>虽然SSH密钥登录相比于传统密码登录已经在安全性和方便性上提高了很多，但仍有一些不足，比如对于人多设备多的大型机构，如果有人员变动需要在所有服务器上删除该人员的公钥。SSH证书登录则解决了这种问题，并且更易管理、扩展性更强、安全性更高。参见<a href="http://www.ruanyifeng.com/blog/2020/07/ssh-certificate.html">阮一峰的网络日志 - SSH 证书登录教程</a>。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>小白菜的建站之路</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>计算机网络</tag>
+      
+      <tag>Terminal</tag>
+      
+      <tag>SSH</tag>
+      
+      <tag>Linux</tag>
+      
+      <tag>运维</tag>
+      
+      <tag>服务器</tag>
+      
+      <tag>网络安全</tag>
+      
+      <tag>信息安全</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>How to Set Pr0xy for Terminal on macOS</title>
+    <link href="/2021/01/21/How-to-Set-Pr0xy-for-Terminal-on-macOS/"/>
+    <url>/2021/01/21/How-to-Set-Pr0xy-for-Terminal-on-macOS/</url>
+    
+    <content type="html"><![CDATA[<h1 id="background"><a class="markdownIt-Anchor" href="#background"></a> Background</h1><p>由于众所周知的情况，我们在使用终端连接一些网站下载程序的速度会很慢，非常慢 <s>，抓心挠肝的慢</s>。即使在系统中设置好了代理也无法直接在终端使用，这同时也导致了一些程序，如 <code>Homebrew</code> ，在替换了国内源之后（可能因为源没替换干净还需要连接 <code>GitHub</code> 等网站）速度依旧很拉胯。今天在<s>掉了十几根头发</s>折腾了半天后终于算是研究明白了。</p><p>本文总结了两种在终端设置并使用代理的方法，经过测试具有非常好的代理加速效果。</p><h1 id="prerequisite"><a class="markdownIt-Anchor" href="#prerequisite"></a> Prerequisite</h1><p>本文用到的软件及服务</p><ul><li>iTerm2 / macOS自带终端（默认shell为zsh）</li><li>ClashX / ClashX Pro （或其他类似软件）</li><li>代理服务（需自行选择）</li></ul><p>测试环境</p><ul><li>macOS 11.1</li><li>黑龙江电信光纤宽带 200M</li></ul><h1 id="approaches"><a class="markdownIt-Anchor" href="#approaches"></a> Approaches</h1><h2 id="1-通过终端命令设置代理"><a class="markdownIt-Anchor" href="#1-通过终端命令设置代理"></a> 1. 通过终端命令设置代理</h2><p>在代理软件<strong>开启了全局连接模式之后</strong></p><p>一次性开启代理（端口号要与代理软件中的相同）：</p><pre><code class="hljs zsh">$ <span class="hljs-built_in">export</span> https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890</code></pre><p>一次性关闭代理：</p><pre><code class="hljs zsh">$ <span class="hljs-built_in">unset</span> https_proxy; <span class="hljs-built_in">unset</span> http_proxy; <span class="hljs-built_in">unset</span> all_proxy</code></pre><p>但是每次输入这么一大长串非常繁琐，我们可以使用 <code>alias</code> 自定义指令来简化。</p><p>为了每次开启终端都能使用我们的自定义指令，首先编辑zsh的配置文件 <code>.zshrc</code> ：</p><pre><code class="hljs zsh">$ vim ~/.zshrc</code></pre><p>在文件中添加以下代码</p><pre><code class="hljs jboss-cli"><span class="hljs-comment"># 开启代理</span><span class="hljs-keyword">alias</span> proxy=&#x27;export https_proxy=http:<span class="hljs-string">//127.0.0.1</span><span class="hljs-function">:7890</span> http_proxy=http:<span class="hljs-string">//127.0.0.1</span><span class="hljs-function">:7890</span> all_proxy=socks5:<span class="hljs-string">//127.0.0.1</span><span class="hljs-function">:7890</span>&#x27;<span class="hljs-comment"># 关闭代理</span><span class="hljs-keyword">alias</span> unproxy=&#x27;<span class="hljs-keyword">unset</span> https_proxy; <span class="hljs-keyword">unset</span> http_proxy; <span class="hljs-keyword">unset</span> all_proxy&#x27;</code></pre><p>保存后重新读取使用新的配置，并检查alias列表中是否更新了 <code>proxy</code> 和 <code>unproxy</code> 两条：</p><pre><code class="hljs zsh">$ <span class="hljs-built_in">source</span> ~/.zshrc$ <span class="hljs-built_in">alias</span>...proxy=<span class="hljs-string">&#x27;export...&#x27;</span>...unproxy=<span class="hljs-string">&#x27;unset ...&#x27;</span>...</code></pre><p>如果上述自定义指令存在则说明设置成功，我们可以使用 <code>proxy</code> 和 <code>unproxy</code> 来一键开启/关闭终端代理。</p><p>使用cip.cc查看IP来测试代理是否成功开启：</p><pre><code class="hljs zsh">$ proxy$ curl cip.ccIP: XX.XXX.XXX.XXX地址: 美国  美国数据二: 香港 | Amazon数据中心数据三:URL: http://www.cip.cc/XX.XXX.XXX.XXX$ unproxy$ curl cip.ccIP: XXX.XXX.XX.XXX地址: 中国  黑龙江  哈尔滨运营商: 电信数据二: 黑龙江省大庆市 | 电信数据三:URL: http://www.cip.cc/XXX.XXX.XX.XXX</code></pre><p>设置成功！</p><blockquote><p>注：如果开启关闭代理都是国内IP地址，请检查代理软件出站模式是否为 <strong>全局连接</strong></p></blockquote><h2 id="2-使用带有增强模式的-clashx-pro"><a class="markdownIt-Anchor" href="#2-使用带有增强模式的-clashx-pro"></a> 2. 使用带有增强模式的 ClashX Pro</h2><p>这个方法就十分<s>带劲</s>简单了。拥有增强模式的 ClashX Pro，在同时打开了 <strong>全局连接</strong> 和 <strong>增强模式</strong> 后不用其他设置便可以直接在终端代理上网。</p><h1 id="epilogue"><a class="markdownIt-Anchor" href="#epilogue"></a> Epilogue</h1><p>虽然也不是个大问题，但是换软件源、改git代理、改终端代理、改Hosts等等试错和排查确实也花了挺长时间。对比了一下，感觉直接使用终端代理相比其他方法还是具有一定优势的：不用所有的包管理软件都需要挨个设置换源、不需要经常更新Hosts，使用上也具有一定灵活性。</p><p>在最终成功设置完后，再次使用 <code>brew install</code> 等命令时，通过流量监控软件可以明显地观察到使用代理前后下载速度从10KB/s不到上升到了几兆每秒。终于不用对着屏幕苦等死等等来一堆连接超时报错了ToT。</p><p>我看网上也有不少朋友折腾了好久，希望以后这方面的网络环境可以有所改善吧，简直太费劲了！！！！！！</p><h1 id="reference"><a class="markdownIt-Anchor" href="#reference"></a> Reference</h1><h3 id="主题相关参考"><a class="markdownIt-Anchor" href="#主题相关参考"></a> 主题相关参考</h3><ul><li><a href="https://mirrors.tuna.tsinghua.edu.cn/help/homebrew/">清华大学开源软件镜像站 - Homebrew/Linuxbrew 镜像使用帮助</a></li><li><a href="https://github.com/yichengchen/clashX">GitHub - ClashX</a></li><li><a href="https://zhuanlan.zhihu.com/p/46973701">知乎 - Linux 让终端走代理的几种方法</a></li><li><a href="https://zhuanlan.zhihu.com/p/90508170">知乎 - mac下镜像飞速安装Homebrew教程</a></li><li><a href="https://zhuanlan.zhihu.com/p/107691233">知乎 - 解决GitHub网页githubusercontent地址无法访问问题</a> (Hosts)</li><li><a href="http://locke.ink/post/Mac-Ternimal-Shadowsocks-fanqiang-kexueshangwang/">Mac中实现终端科学上网</a></li></ul><h3 id="以下是一些与主题无关但用到了的基本操作"><a class="markdownIt-Anchor" href="#以下是一些与主题无关但用到了的基本操作"></a> 以下是一些与主题无关但用到了的基本操作</h3><ul><li><a href="https://www.jianshu.com/p/bdc1f7e689b3">简书 - Vim常用搜索技巧</a></li><li><a href="https://www.jianshu.com/p/6f337037d8fd">简书 - Vim 撤销 回退 操作</a></li><li><a href="https://www.jianshu.com/p/f3cb89a3983d">简书 - Mac 终端常用快捷键</a></li><li><a href="https://www.cnblogs.com/linjunfu/p/11008708.html">博客园 - Linux/Mac中alias的使用</a></li><li><a href="https://www.phpernote.com/linux/1199.html">PHPerNote - Linux Vim 删除方法总结</a></li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>程序猿的自我修养</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>计算机网络</tag>
+      
+      <tag>Pr0xy</tag>
+      
+      <tag>Terminal</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>如何防范服务器暴力破解攻击</title>
+    <link href="/2020/11/03/%E5%A6%82%E4%BD%95%E9%98%B2%E8%8C%83%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9A%B4%E5%8A%9B%E7%A0%B4%E8%A7%A3%E6%94%BB%E5%87%BB/"/>
+    <url>/2020/11/03/%E5%A6%82%E4%BD%95%E9%98%B2%E8%8C%83%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9A%B4%E5%8A%9B%E7%A0%B4%E8%A7%A3%E6%94%BB%E5%87%BB/</url>
+    
+    <content type="html"><![CDATA[<h1 id="background"><a class="markdownIt-Anchor" href="#background"></a> Background</h1><p>今天开发项目的时候朋友跟我说怎么我的服务器卡卡的，是不是有人攻击。</p><p>我当时第一反应是服务器在美国，毕竟隔个太平洋卡一点正常吧。他还觉得不对劲，查了<code>lastb</code>登陆失败记录一看</p><p>好家伙我特么直接好家伙！<strong>9000多次失败登陆记录！！！</strong></p><p>这是有人在暴力破解登陆哇！得亏密码设置的比较复杂要不然被人拿去干啥坏事了都不知道。。。</p><p>赶紧紧急咨询了主机平台客服和我搞信安的朋友，他们帮我出了几个主意</p><h2 id="reference"><a class="markdownIt-Anchor" href="#reference"></a> Reference</h2><ul><li><a href="https://blog.csdn.net/z13615480737/article/details/83029118">CSDN - Linux CentOS 7查看Linux的登录日志</a></li></ul><h1 id="1-封禁攻击源ip或设置白名单"><a class="markdownIt-Anchor" href="#1-封禁攻击源ip或设置白名单"></a> 1. 封禁攻击源IP或设置白名单</h1><p>这基本就是最直接的方法，尤其适用于来自单个IP或小范围IP的攻击。可以用<code>firewalld</code>防火墙来实现</p><h2 id="设置黑名单"><a class="markdownIt-Anchor" href="#设置黑名单"></a> 设置黑名单</h2><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> firewall-cmd --permanent --add-rich-rule=<span class="hljs-string">&quot;rule family=&#x27;ipv4&#x27; source address=&#x27;222.222.222.222&#x27; reject&quot;</span>  <span class="hljs-comment"># 单个IP</span></span><span class="hljs-meta">#</span><span class="bash"> firewall-cmd --permanent --add-rich-rule=<span class="hljs-string">&quot;rule family=&#x27;ipv4&#x27; source address=&#x27;222.222.222.0/24&#x27; reject&quot;</span> <span class="hljs-comment"># IP段</span></span><span class="hljs-meta">#</span><span class="bash"> firewall-cmd --permanent --add-rich-rule=<span class="hljs-string">&quot;rule family=ipv4 source address=192.168.1.2 port port=80  protocol=tcp  reject&quot;</span> <span class="hljs-comment"># 单个IP的某个端口</span></span></code></pre><p>命令最后的 <code>reject</code> 参数也可以使用 <code>drop</code>，区别是 <code>drop</code> 直接丢弃流量请求，<code>reject</code> 会返回拒绝信息</p><h2 id="设置白名单谨慎操作"><a class="markdownIt-Anchor" href="#设置白名单谨慎操作"></a> 设置白名单（谨慎操作）</h2><p>首先要将允许的IP地址和端口号加入到信任域</p><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> firewall-cmd --permanent --zone=trusted --add-source=173.245.48.0/20 <span class="hljs-comment"># 将允许源加入到信任区域</span></span><span class="hljs-meta">#</span><span class="bash"> firewall-cmd --reload <span class="hljs-comment"># 使 trusted 区域设置生效</span></span><span class="hljs-meta">#</span><span class="bash"> firewall-cmd --zone=trusted --list-all <span class="hljs-comment"># 确认 trusted 区域是否设置正确</span></span></code></pre><p>再将默认区域切换到<code>drop</code>，默认网卡分配给<code>drop</code>，这样除了<code>trusted</code>外所有链接都会被无视</p><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> firewall-cmd --set-default-zone=drop</span><span class="hljs-meta">#</span><span class="bash"> firewall-cmd --permanent --zone=drop --change-interface=eth0</span></code></pre><p><strong>再重启防火墙前一定要注意你的所有IP都加入到了 <code>trusted</code> 中！否则可能要和你服务器失联了！！！</strong></p><h2 id="别忘了最后都要重启防火墙"><a class="markdownIt-Anchor" href="#别忘了最后都要重启防火墙"></a> 别忘了最后都要重启防火墙</h2><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> firewall-cmd --reload <span class="hljs-comment"># 重新载入防火墙生效</span></span></code></pre><p>但也存在着两个缺点：</p><ol><li>他要是换着IP来你就没法只用黑名单了</li><li>白名单的话虽然更安全些，但是给登陆也带来了一定的复杂性（出门在外怎么办？爬了梯子怎么办？）</li></ol><h2 id="reference-2"><a class="markdownIt-Anchor" href="#reference-2"></a> Reference</h2><ul><li><a href="https://www.hostarr.com/firewalld-tutorial/">Firewalld 防火墙配置使用方法</a></li><li><a href="https://www.jianshu.com/p/4a9958d2e859">简书 - Firewall的规则设置与命令(白名单设置)</a></li><li><a href="https://teddysun.com/566.html">如何使用 FirewallD 开启 IP 白名单</a></li><li><a href="https://blog.csdn.net/elong490/article/details/89450039">CSDN - RHEL7、CentOS7 下使用 Firewall 封IP</a></li></ul><h1 id="2-更改ssh登陆默认端口"><a class="markdownIt-Anchor" href="#2-更改ssh登陆默认端口"></a> 2. 更改SSH登陆默认端口</h1><p>这个也属于比较常规的做法，相当于我把之前家里的门用水泥封死，我在攻击者不知道的地方再开了个门用来进行ssh通信以防范攻击。</p><h2 id="step-1-更改sshd配置文件"><a class="markdownIt-Anchor" href="#step-1-更改sshd配置文件"></a> Step 1 更改sshd配置文件</h2><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> nano /etc/ssh/sshd_config</span></code></pre><p><img src="/img/changePort.png" alt="" /></p><p>找到Port开始的一行，如果前面有井号去掉，将后面的数字修改成你想要的（一定要记住！）</p><p>需要注意的是最好将端口号设定到 <code>49152</code> 到 <code>65535</code> 之间，避免和现有的服务冲突</p><h2 id="step-2-更改selinux安全上下文"><a class="markdownIt-Anchor" href="#step-2-更改selinux安全上下文"></a> Step 2 更改SELinux安全上下文</h2><p>正如图里所提示的，如果你运行在一个安全增强式Linux (Security-Enhanced Linux) 系统上，还需要更改下面的配置</p><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> semanage port -a -t ssh_port_t -p tcp [刚更改的端口号]</span></code></pre><h2 id="step-3-重启ssh-daemon"><a class="markdownIt-Anchor" href="#step-3-重启ssh-daemon"></a> Step 3 重启SSH Daemon</h2><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> systemctl restart sshd</span></code></pre><p>之后在登陆的时候需要再命令上加上你指定的端口号</p><pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh -p [刚更改的端口号] username@yourhost</span></code></pre><p>改完之后果然就没人再去登陆了。。。瞬间清净！</p><p>不过我问了我朋友现在不都有端口扫描工具啥的吗，那我设置别的端口不会被发现吗，他如是说：</p><blockquote><p>一般都是公网扫22端口的，但是要是针对你专门黑你，那就没辙了。但感觉一般不会，因为你还不配（噗）</p></blockquote><h2 id="reference-3"><a class="markdownIt-Anchor" href="#reference-3"></a> Reference</h2><ul><li><a href="https://www.hostwinds.com/guide/change-your-servers-ssh-port-to-reduce-brute-force-attacks/">Change Your Server’s SSH Port To Reduce Brute Force Attacks</a></li></ul><h2 id="拓展阅读"><a class="markdownIt-Anchor" href="#拓展阅读"></a> 拓展阅读</h2><ul><li><p><a href="https://zhuanlan.zhihu.com/p/30483108">知乎 - SELinux 入门</a></p></li><li><p><a href="https://blog.csdn.net/jigetage/article/details/89208788">CSDN - ssh sshd 区别</a></p></li></ul><h1 id="3-使用其他工具"><a class="markdownIt-Anchor" href="#3-使用其他工具"></a> 3. 使用其他工具</h1><p>朋友说正常来讲云平台都会有安全机制把这种爆破登陆block掉，咱也不知道是没氪金没有还是有没设置好🤷‍♂️</p><p>后来一查也有专业的工具（比如<code>Fail2Ban</code>）去防止这类攻击，不过最近final忙昏了头，先放这以后有空再研究吧～</p><h3 id="reference-4"><a class="markdownIt-Anchor" href="#reference-4"></a> Reference</h3><ul><li><a href="https://zhuanlan.zhihu.com/p/33546122">知乎 - 如何在 Linux 上用 Fail2Ban 保护服务器免受暴力攻击</a></li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>小白菜的建站之路</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>计算机网络</tag>
+      
+      <tag>Linux</tag>
+      
+      <tag>运维</tag>
+      
+      <tag>服务器</tag>
+      
+      <tag>网络安全</tag>
+      
+      <tag>信息安全</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>构建基于Vue 3.0的PWA时踩过的一些坑</title>
+    <link href="/2020/10/31/%E6%9E%84%E5%BB%BA%E5%9F%BA%E4%BA%8EVue3-0%E7%9A%84PWA%E6%97%B6%E8%B8%A9%E8%BF%87%E7%9A%84%E4%B8%80%E4%BA%9B%E5%9D%91/"/>
+    <url>/2020/10/31/%E6%9E%84%E5%BB%BA%E5%9F%BA%E4%BA%8EVue3-0%E7%9A%84PWA%E6%97%B6%E8%B8%A9%E8%BF%87%E7%9A%84%E4%B8%80%E4%BA%9B%E5%9D%91/</url>
+    
+    <content type="html"><![CDATA[<h1 id="intro-background"><a class="markdownIt-Anchor" href="#intro-background"></a> Intro &amp; Background</h1><p>今年的Mobile课程中第二个作业是小组共同开发一个Mobile App，我们小组突发奇想准备搞一个基于地理位置的彩蛋搜寻社交App。本来一开始想用原生Android来做，后来发现比较麻烦而且无法跨平台，就想到了直接做一个Web App，然后再用Android和iOS的WebView控件来加载。</p><p>作为前前端工程师的我，虽然没有贼厉害但也可以说是信心满满，但令我万万妹想到的是，踩坑之路才刚刚开始。。。</p><p>而且做着这些东西才真正的懂得了为什么前端面试会问那些跨域啊之类的高频问题，并且才对这些问题有了更深的理解，现在准备把这些遇到的问题记录下来，方便以后躲坑😝</p><blockquote><p>注意：标题里写了两个<code>?</code>是面试中考过的，三个<code>?</code>及以上的都是面试常考的 <code>||</code> 当时做项目时十分困扰我的地方</p></blockquote><h1 id="problems"><a class="markdownIt-Anchor" href="#problems"></a> Problems</h1><h2 id="1-html相关"><a class="markdownIt-Anchor" href="#1-html相关"></a> 1. HTML相关</h2><h4 id="11-在form里啥也没写的button怎么就点击自动提交了呢"><a class="markdownIt-Anchor" href="#11-在form里啥也没写的button怎么就点击自动提交了呢"></a> 1.1 在<code>&lt;form&gt;</code>里啥也没写的<code>&lt;button&gt;</code>怎么就点击自动提交了呢？</h4><h4 id="如何美化input-typefile-表单"><a class="markdownIt-Anchor" href="#如何美化input-typefile-表单"></a> 如何美化<code>&lt;input type=&quot;file&quot; /&gt;</code>表单</h4><p><a href="https://www.jianshu.com/p/07c27e576b26">https://www.jianshu.com/p/07c27e576b26</a></p><p>虽然这个文件里写了十分详细，但后来经我测试发现，现代浏览器中（我写的时候是 Google Chrome 86.0.4240.111）只要把input样式设置成<code>display:none;</code>，就行。然后要设置个<code>&lt;label&gt;</code>与input关联，作为触发按钮，点击label标签就可以打开上传文件的对话框。然后就美化label标签就行，十分简单！</p><p>待填坑…</p><h2 id="2-javascript相关"><a class="markdownIt-Anchor" href="#2-javascript相关"></a> 2. JavaScript相关</h2><h4 id="21-this到底指向何方"><a class="markdownIt-Anchor" href="#21-this到底指向何方"></a> 2.1 this到底指向何方？？？？</h4><h4 id="input加载后的文本图片如何预览"><a class="markdownIt-Anchor" href="#input加载后的文本图片如何预览"></a> input加载后的文本/图片如何预览</h4><p><a href="https://segmentfault.com/a/1190000018314505">https://segmentfault.com/a/1190000018314505</a></p><h4 id="如何用axios上传图片"><a class="markdownIt-Anchor" href="#如何用axios上传图片"></a> 如何用axios上传图片</h4><p><a href="https://stackoverflow.com/questions/43013858/how-to-post-a-file-from-a-form-with-axios">https://stackoverflow.com/questions/43013858/how-to-post-a-file-from-a-form-with-axios</a><br /><a href="https://juejin.im/post/6844903863183491086">https://juejin.im/post/6844903863183491086</a><br />待填坑…</p><h2 id="3-vue相关"><a class="markdownIt-Anchor" href="#3-vue相关"></a> 3. Vue相关</h2><h3 id="31-vue-basics"><a class="markdownIt-Anchor" href="#31-vue-basics"></a> 3.1 Vue Basics</h3><h4 id="311-vue双向绑定的原理是什么"><a class="markdownIt-Anchor" href="#311-vue双向绑定的原理是什么"></a> 3.1.1 Vue双向绑定的原理是什么？？？？</h4><h4 id="312-vue的环境变量设置"><a class="markdownIt-Anchor" href="#312-vue的环境变量设置"></a> 3.1.2 Vue的环境变量设置</h4><h4 id="313-跨组建通信"><a class="markdownIt-Anchor" href="#313-跨组建通信"></a> 3.1.3 跨组建通信</h4><p>待填坑…</p><h3 id="32-vue-router"><a class="markdownIt-Anchor" href="#32-vue-router"></a> 3.2 Vue Router</h3><h4 id="321-vue的几种路由模式"><a class="markdownIt-Anchor" href="#321-vue的几种路由模式"></a> 3.2.1 Vue的几种路由模式？？</h4><p>待填坑…</p><h4 id="322-为啥一build打包出来的东西一片空白"><a class="markdownIt-Anchor" href="#322-为啥一build打包出来的东西一片空白"></a> 3.2.2 为啥一build打包出来的东西一片空白？</h4><p>待填坑…</p><p>Reference</p><ul><li><a href="https://juejin.im/post/6844903502544633869">掘金 - Vue-CLI npm run build空白页的两个坑 Webpack gzip文件压缩优化打包文件</a></li><li><a href="https://www.cnblogs.com/lst619247/p/13603402.html">博客园 - Vue-CLI 4 &amp; Vue 3.0改变路径为hash路径</a></li></ul><h2 id="4-计算机网络相关"><a class="markdownIt-Anchor" href="#4-计算机网络相关"></a> 4. 计算机网络相关</h2><h3 id="41-跨域问题"><a class="markdownIt-Anchor" href="#41-跨域问题"></a> 4.1 跨域问题</h3><h4 id="411-跨域到底是个何方神圣"><a class="markdownIt-Anchor" href="#411-跨域到底是个何方神圣"></a> 4.1.1 跨域到底是个何方神圣？？？？</h4><h4 id="412-如何解决跨域问题"><a class="markdownIt-Anchor" href="#412-如何解决跨域问题"></a> 4.1.2 如何解决跨域问题？？？？</h4><p>待填坑…</p><h3 id="42-如何防范服务器暴力破解攻击"><a class="markdownIt-Anchor" href="#42-如何防范服务器暴力破解攻击"></a> 4.2 如何防范服务器暴力破解攻击</h3><p>自己写了篇博客，见<a href="https://unequaled804.github.io/2020/11/03/%E5%A6%82%E4%BD%95%E9%98%B2%E8%8C%83%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9A%B4%E5%8A%9B%E7%A0%B4%E8%A7%A3%E6%94%BB%E5%87%BB/">Unequaled804 - 如何防范服务器暴力破解攻击</a></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>前端开发使我掉发</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>计算机网络</tag>
+      
+      <tag>前端开发</tag>
+      
+      <tag>Vue</tag>
+      
+      <tag>HTML</tag>
+      
+      <tag>JavaScript</tag>
+      
+      <tag>EMCAScript</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  
+</search>
