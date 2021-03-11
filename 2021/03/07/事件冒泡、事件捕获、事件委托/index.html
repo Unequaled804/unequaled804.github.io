@@ -17,7 +17,7 @@
   <meta name="description" content="">
   <meta name="author" content="Unequaled804">
   <meta name="keywords" content="">
-  <title>SSH密钥登录设置 - Unequaled804</title>
+  <title>事件冒泡、事件捕获、事件委托 - Unequaled804</title>
 
   <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
 
@@ -165,8 +165,8 @@
   
     <span class="post-meta">
       <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-      <time datetime="2021-02-16 12:47" pubdate>
-        2021年2月16日 下午
+      <time datetime="2021-03-07 10:40" pubdate>
+        2021年3月7日 上午
       </time>
     </span>
   
@@ -177,7 +177,7 @@
     
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      1.8k 字
+      1.5k 字
     </span>
   
 
@@ -187,7 +187,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      22
+      19
        分钟
     </span>
   
@@ -225,124 +225,177 @@
         <div class="py-5" id="board">
           <article class="post-content mx-auto" id="post">
             <!-- SEO header -->
-            <h1 style="display: none">SSH密钥登录设置</h1>
+            <h1 style="display: none">事件冒泡、事件捕获、事件委托</h1>
             
             <div class="markdown-body" id="post-body">
-              <h1 id="background"><a class="markdownIt-Anchor" href="#background"></a> Background</h1>
-<p>在我们使用远程服务器的过程中，使用传统密码登录不仅繁琐而且密码也容易被破解，而密钥登录基本杜绝了这种风险，并且登录更加方便（可以不用输密码）。</p>
-<p>SSH密钥使用了RSA非对称加密算法，在通信的过程使用一对密钥：<strong>公钥</strong>和<strong>私钥</strong>来对消息进行加密。其中公钥对所有人都可见，是公开的；私钥是私密的，公钥加密的信息只有对应的私钥才能打开（解密）。这种特殊的加密解密方式解决了对称加密算法中的密钥的保存和传递问题（如何安全地让通信双方都知道同一个加密方式而不被其他人获取）。具体技术细节在这里不再赘述，感兴趣的朋友可以看看阮一峰老师的博客<a target="_blank" rel="noopener" href="https://www.ruanyifeng.com/blog/2013/06/rsa_algorithm_part_one.html">阮一峰的网络日志 - RSA算法原理（一）</a>。</p>
-<p>接下来笔者将会介绍如何在本地和远程服务器进行设置，实现SSH密钥登录。</p>
-<p>示例环境</p>
+              <h1 id="事件冒泡与捕获"><a class="markdownIt-Anchor" href="#事件冒泡与捕获"></a> 事件冒泡与捕获</h1>
+<h2 id="概念"><a class="markdownIt-Anchor" href="#概念"></a> 概念</h2>
+<p>开发第四代Web浏览器时，开发团队都遇到了如何处理事件顺序的问题。就好比在一张纸上画出几个同心圆，手指按在中间圆的同时，也相当于按到了其他的圆。关于如何处理这些事件，当时的IE和Netscape团队给出了两种截然相反的事件流方案：</p>
 <ul>
-<li>本地环境：macOS 11.2</li>
-<li>远程环境：centOS 8.3.2011</li>
+<li>
+<p>事件冒泡（IE）：事件从<strong>最具体的元素</strong>一直向上传播直到<strong>Window/Document</strong>。</p>
+</li>
+<li>
+<p>事件捕获（Netscape）：事件从<strong>Window/Document</strong>一直向下传播直到<strong>最具体的元素</strong>。</p>
+</li>
 </ul>
-<h1 id="1-本地生成公钥-私钥对"><a class="markdownIt-Anchor" href="#1-本地生成公钥-私钥对"></a> 1. 本地生成公钥-私钥对</h1>
-<p>macOS中的SSH密钥一般保存在用户文件夹下的<code>.ssh</code>文件夹，即<code>/User/yourname/.ssh</code>或<code>~/.ssh</code>。</p>
-<p>首先在命令行使用<code>ssh-keygen</code>工具在本地生成公钥私钥对，根据提示设置密钥文件名，密码短语。</p>
-<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-keygen -C <span class="hljs-string">&quot;密钥对的注释&quot;</span></span>
-Enter file in which to save the key (/Users/yourname/.ssh/id_rsa): id_rsa_demo
-Enter passphrase (empty for no passphrase):
-Enter same passphrase again:
-Your identification has been saved in id_rsa_demo.
-Your public key has been saved in id_rsa_demo.pub.
-The key fingerprint is:
-SHA256:VKrYi4a9HrDAoUoTQTUsQlXwn+IASQbamGw74EJIshE 密钥对的注释
-The key&#x27;s randomart image is:
-+---[RSA 3072]----+
-|EO+=o.    .      |
-|XBo.o    o       |
-|OOo  .  o        |
-|B =  o.o.        |
-|+B....ooS        |
-|+.o=o...         |
-|. o =..          |
-|   . o           |
-|   .o            |
-+----[SHA256]-----+</code></pre>
-<p>这里需要注意几点：</p>
+<h2 id="现代浏览器中的事件流"><a class="markdownIt-Anchor" href="#现代浏览器中的事件流"></a> 现代浏览器中的事件流</h2>
+<p><img src="/img/event-flow.png" srcset="/img/loading.gif" alt="" /></p>
+<p>现代浏览器对两种事件流的方案都有支持，如上图所示（源：W3C文档），整个事件流分为三个阶段：<strong>捕获阶段</strong>、<strong>目标阶段</strong>、<strong>冒泡阶段</strong>。</p>
+<h2 id="dom0-事件处理程序"><a class="markdownIt-Anchor" href="#dom0-事件处理程序"></a> DOM0 事件处理程序</h2>
+<p>DOM0 Events 中为DOM元素添加事件处理程序，是将其事件属性值（如<code>onclick</code> ）直接赋值给一个函数；而取消事件则直接将其赋值为<code>null</code>。</p>
+<pre><code class="hljs javascript"><span class="hljs-keyword">const</span> btn = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">&#x27;mybtn&#x27;</span>);
+
+<span class="hljs-comment">// 添加事件处理程序</span>
+btn.onclick = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>&#123;
+	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">`The button <span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.id&#125;</span> is clicked!`</span>); 
+	<span class="hljs-comment">// &#x27;The button mybtn is clicked!&#x27; (this指向元素本身)</span>
+&#125;
+
+<span class="hljs-comment">// 移除事件处理程序</span>
+btn.onclick = <span class="hljs-literal">null</span>;</code></pre>
+<p>DOM0 事件处理程序<strong>只支持冒泡</strong></p>
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">onclick</span>=<span class="hljs-string">&quot;console.log(&#x27;div is clicked!&#x27;)&quot;</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">span</span> <span class="hljs-attr">onclick</span>=<span class="hljs-string">&quot;console.log(&#x27;span is clicked!&#x27;)&quot;</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">onclick</span>=<span class="hljs-string">&quot;console.log(&#x27;button is clicked!&#x27;)&quot;</span>&gt;</span>
+      Click Me!
+    <span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">span</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></code></pre>
+<p>点击后按钮后可以看到事件触发顺序是从<code>&lt;button&gt;</code>到最外层<code>&lt;div&gt;</code></p>
+<p><img src="/img/event-flow-demo-1.png" srcset="/img/loading.gif" alt="" /></p>
+<h2 id="dom2-事件处理程序"><a class="markdownIt-Anchor" href="#dom2-事件处理程序"></a> DOM2 事件处理程序</h2>
+<p>DOM2 Events添加了两个方法用于为DOM元素添加和移除事件处理程序：<code>addEventListener()</code> 和 <code>removeEventListener()</code></p>
+<p>具体用法：</p>
+<pre><code class="hljs javascript">element.addEventListener(type, handler[, useCapture = <span class="hljs-literal">false</span>]);
+element.removeEventListener(type, handler[, useCapture = <span class="hljs-literal">false</span>]);
+
+<span class="hljs-comment">// type: event名称，如&#x27;click&#x27;, &#x27;mousemove&#x27;等</span>
+<span class="hljs-comment">// handler: 具体的处理函数</span>
+<span class="hljs-comment">// useCapture: 可选，是否为捕获阶段触发，默认为false（即默认冒泡阶段触发）</span></code></pre>
+<p>使用的时候需要注意两点：</p>
 <ol>
-<li><strong>注释</strong>：<code>-C</code> 和后面字符串是密钥对的注释，非必需。不写默认为系统当前用户名，一般填邮箱或者创建者信息。</li>
-<li><strong>密钥文件名</strong>：留空则为默认<code>/Users/yourname/.ssh/id_rsa</code>，直接填写文件名会保存在当前目录。注意，如果要保存到其他目录请填写绝对路径！例如<code>/Users/yourname/Documents/id_rsa</code>，填写<code>~/Documents/id_rsa</code>会报错。</li>
-<li><strong>密码短语</strong>：<code>passphrase</code>相当于用一个自定义密码来保护私钥，一旦私钥泄露还有一个密码作为最后一道防线，设置后每次登录需要填（也可加到缓存中不用这么麻烦，稍后会讲）。</li>
+<li>
+<p><strong>不要使用匿名函数！</strong> 否则无法移除事件处理程序！</p>
+</li>
+<li>
+<p>移除事件处理程序时，参数要与设置事件处理程序时完全一致！（因为一个事件可以注册多个处理程序，并且在捕获和冒泡阶段都可以，浏览器需要知道到底移除哪个阶段的哪个程序）</p>
+</li>
 </ol>
-<p>密钥对生成之后，其所在目录会生成两个新文件。在本示例中生成的公钥为<code>id_rsa_demo.pub</code>，对应的私钥为<code>id_rsa_demo</code>。密钥默认采用RSA，密钥大小为3072位。如果想生成更强密钥可在生成时添加<code>-b 位数</code>参数指定密钥位数，最高16384。</p>
-<h1 id="2-上传公钥至远程服务器"><a class="markdownIt-Anchor" href="#2-上传公钥至远程服务器"></a> 2. 上传公钥至远程服务器</h1>
-<blockquote>
-<p>假如你使用的是腾讯云、阿里云这样的主机商，一般可以直接在控制台内添加SSH密钥，可以跳过这步，参考主机商对应配置文档进行设置。</p>
-</blockquote>
-<p>上传需要使用<code>ssh-copy-id</code>,格式如下：</p>
-<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-copy-id -i 本地公钥文件路径 远程主机用户名@远程主机域名或IP -p 远程主机SSH端口号 <span class="hljs-comment"># 如果是默认22端口, -p可以省略</span></span></code></pre>
-<p>假如我们的主机是<code>123.45.67.89</code>，用户名为<code>user</code>，SSH端口为<code>2222</code>：</p>
-<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-copy-id -i ~/.ssh/id_rsa_demo user@123.45.67.89 -p 2222</span>
-/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: &quot;/Users/yourname/.ssh/id_rsa_demo.pub&quot;
-/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
-/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
-user@123.45.67.89&#x27;s password:
+<p>举个🌰</p>
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">span</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&#x27;myspan&#x27;</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&#x27;mybtn&#x27;</span>&gt;</span>
+      Click Me!
+    <span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">span</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+</code></pre>
+<pre><code class="hljs javascript"><span class="hljs-keyword">const</span> span = <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-string">&#x27;#myspan&#x27;</span>);
+<span class="hljs-keyword">const</span> btn = <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-string">&#x27;#mybtn&#x27;</span>);
 
-Number of key(s) added:        1
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler1</span> (<span class="hljs-params">e</span>) </span>&#123;
+	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">`before btn clicked! from <span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.id&#125;</span>`</span>);
+&#125;
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler2</span> (<span class="hljs-params">e</span>) </span>&#123;
+	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">`btn is clicked! from <span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.id&#125;</span>`</span>);
+&#125;
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler3</span> (<span class="hljs-params">e</span>) </span>&#123;
+	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">`after btn clicked! from <span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.id&#125;</span>`</span>);
+&#125;
 
-Now try logging into the machine, with:   &quot;ssh -p &#x27;2222&#x27; &#x27;user@123.45.67.89&#x27;&quot;
-and check to make sure that only the key(s) you wanted were added.</code></pre>
-<p>过程中需要输入私钥密码短语（如设置过）以及远程主机密码。</p>
-<p>如果上传成功，我们会在远程主机的如下文件中看到和我们在本地生成的公钥的内容。</p>
-<pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> cat ~/.ssh/authorized_keys</span></code></pre>
-<blockquote>
-<p>其实还有另一个方法就是手动将公钥内容粘贴至<code>authorized_keys</code>中 <s>（虽然没上面这个高端哈）</s>。</p>
-</blockquote>
-<h1 id="3-远程服务器配置sshd"><a class="markdownIt-Anchor" href="#3-远程服务器配置sshd"></a> 3. 远程服务器配置sshd</h1>
-<p>修改以下文件：</p>
-<pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> vim /etc/ssh/sshd_config</span></code></pre>
-<p>修改文件中如下部分配置为：</p>
-<pre><code class="hljs bash">PubkeyAuthentication yes    <span class="hljs-comment">#设置公钥鉴权</span>
-PermitRootLogin yes         <span class="hljs-comment">#设置Root用户可通过SSH登录 </span>
-PasswordAuthentication no   <span class="hljs-comment">#关闭密码登录</span></code></pre>
-<p>设置完毕后重启sshd服务即可。</p>
-<pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> systemctl restart sshd.service</span></code></pre>
-<p>至此所有SSH密钥的登录的基本配置，再次远程主机登录即可直接使用SSH密钥。</p>
-<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh -i 本地公钥文件路径 远程主机用户名@远程主机域名或IP -p 远程主机SSH端口号</span></code></pre>
-<blockquote>
-<p>注意：如果仍然出现错误提示<code>Permission denied (publickey,gssapi-keyex,gssapi-with-mic).</code>请检查用户名是否正确。之前实验的时候笔者用主机商设置的的默认用户就无法登陆，改为root用户即可正常使用。</p>
-</blockquote>
-<p>不过虽然密码登录不用了，但是每次登录还是要输很多东西，而且配置了密码短语的私钥还是要输入密码，这可怎么办呢？</p>
-<h1 id="4-本地ssh-config-ssh-agent设置"><a class="markdownIt-Anchor" href="#4-本地ssh-config-ssh-agent设置"></a> 4. 本地SSH Config &amp; ssh-agent设置</h1>
-<p>我们可以进行如下设置来解决上述问题。</p>
-<p>在本地修改或创建如下配置文件：</p>
-<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> vim ~/.ssh/config</span></code></pre>
-<p>加入以下内容</p>
-<pre><code class="hljs bash">Host 主机别名
-    Hostname 主机域名或IP
-    User 用户名
-    Port 远程主机SSH端口号 <span class="hljs-comment">#不写这行默认22</span>
-    IdentityFile 本地私钥路径
-    AddKeysToAgent no(default)/confirm/ask/yes <span class="hljs-comment">#如果填yes,自动将私钥加入ssh-agent，不用每次都输私钥密码</span></code></pre>
-<p>在上述例子中即为</p>
-<pre><code class="hljs routeros">Host myhost
-    Hostname 123.45.67.89
-   <span class="hljs-built_in"> User </span>user
-   <span class="hljs-built_in"> Port </span>2222
-    IdentityFile ~/.ssh/id_rsa_demo
-    AddKeysToAgent <span class="hljs-literal">yes</span></code></pre>
-<p>以后直接填写<code>ssh myhost</code>，即可完成连接（第一次要输私钥密码）</p>
-<p>更多配置请参考<a target="_blank" rel="noopener" href="https://deepzz.com/post/how-to-setup-ssh-config.html">Deepzz - SSH Config 那些你所知道和不知道的事</a></p>
-<hr />
-<p>除了通过在SSH Config中添加<code>AddKeysToAgent</code>字段，还可以在命令行中输入以下命令，来将私钥添加至<code>ssh-agent</code>缓存：</p>
-<pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> ssh-add ~/.ssh/your_private_key</span>
-Enter passphrase for /Users/your_name/.ssh/your_private_key: #输入密码
-Identity added: /Users/your_name/.ssh/your_private_key</code></pre>
-<p>如果需要删除缓存中的私钥，恢复每次登陆都输密码的模式，在上述命令后加<code>-d</code>参数即可。</p>
-<h1 id="reference"><a class="markdownIt-Anchor" href="#reference"></a> Reference</h1>
+span.addEventListener(<span class="hljs-string">&#x27;click&#x27;</span>, handler1, <span class="hljs-literal">true</span>);
+btn.addEventListener(<span class="hljs-string">&#x27;click&#x27;</span>, handler2, <span class="hljs-literal">false</span>);
+span.addEventListener(<span class="hljs-string">&#x27;click&#x27;</span>, handler3);</code></pre>
+<p><img src="/img/event-flow-demo-2.png" srcset="/img/loading.gif" alt="" /></p>
+<p>我们可以看到点击按钮后，点击事件先被<code>myspan</code><strong>捕获</strong>并触发<code>handler1</code>，再传递到<code>mybtn</code>触发<code>handler2</code>，最终<strong>冒泡</strong>回<code>myspan</code>触发<code>handler3</code>。</p>
+<p>如果需要移除点击事件，<code>addEventListener</code>时的<strong>所有参数都要提供哦</strong>。</p>
+<pre><code class="hljs javascript">btn.removeEventListener(<span class="hljs-string">&#x27;click&#x27;</span>, handler2, <span class="hljs-literal">false</span>);</code></pre>
+<h2 id="阻止冒泡与捕获"><a class="markdownIt-Anchor" href="#阻止冒泡与捕获"></a> 阻止冒泡与捕获</h2>
+<p>在实际开发的过程中我们可能会遇到两个重叠元素都添加了点击事件，点击的时候因为冒泡/捕获会触发另一个不应该触发的元素的点击操作，此时可在handler函数中使用</p>
+<p><code>event.stopPropagation()</code></p>
+<p>来阻止当前触发节点之后的默认冒泡/捕获流。</p>
+<h1 id="事件委托事件代理"><a class="markdownIt-Anchor" href="#事件委托事件代理"></a> 事件委托（事件代理）</h1>
+<h2 id="背景"><a class="markdownIt-Anchor" href="#背景"></a> 背景</h2>
+<p>假如我们有如下列表，想点击每个项目做不同的操作（例子来源于JavaScript高级教程）</p>
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">ul</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;myLinks&quot;</span>&gt;</span>
+	<span class="hljs-tag">&lt;<span class="hljs-name">li</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;goSomewhere&quot;</span>&gt;</span>Go somewhere<span class="hljs-tag">&lt;/<span class="hljs-name">li</span>&gt;</span>
+	<span class="hljs-tag">&lt;<span class="hljs-name">li</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;doSomething&quot;</span>&gt;</span>Do something<span class="hljs-tag">&lt;/<span class="hljs-name">li</span>&gt;</span>
+	<span class="hljs-tag">&lt;<span class="hljs-name">li</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;sayHi&quot;</span>&gt;</span>Say hi<span class="hljs-tag">&lt;/<span class="hljs-name">li</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">ul</span>&gt;</span></code></pre>
+<p>正常来讲需要给每个需要添加点击事件处理程序的节点挨个设置事件监听</p>
+<pre><code class="hljs javascript"><span class="hljs-keyword">let</span> item1 = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">&quot;goSomewhere&quot;</span>);
+<span class="hljs-keyword">let</span> item2 = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">&quot;doSomething&quot;</span>);
+<span class="hljs-keyword">let</span> item3 = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">&quot;sayHi&quot;</span>);
+      
+item1.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span class="hljs-function">(<span class="hljs-params">event</span>) =&gt;</span> &#123;
+  location.href = <span class="hljs-string">&quot;http:// www.wrox.com&quot;</span>;
+&#125;);
+      
+item2.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span class="hljs-function">(<span class="hljs-params">event</span>) =&gt;</span> &#123;
+  <span class="hljs-built_in">document</span>.title = <span class="hljs-string">&quot;I changed the document&#x27;s title&quot;</span>;
+&#125;);
+      
+item3.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span class="hljs-function">(<span class="hljs-params">event</span>) =&gt;</span> &#123;
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&quot;hi&quot;</span>);
+&#125;);</code></pre>
+<p>但是这样做会有一些弊端：</p>
+<ol>
+<li>
+<p>首先是每个函数都是对象，都会占用内存空间。对象越多，性能越差。</p>
+</li>
+<li>
+<p>其次多次访问DOM元素可能在一开始会造成页面交互延迟。</p>
+</li>
+</ol>
+<p>事件委托应运而生。</p>
+<h2 id="概念-2"><a class="markdownIt-Anchor" href="#概念-2"></a> 概念</h2>
+<p>其实事件委托的概念很简单，因为事件流都有冒泡阶段，一定范围内DOM元素的事件都会冒泡到他们父级元素上。在这个例子中就是这些<code>&lt;li&gt;</code>最后都会冒泡到<code>&lt;ul&gt;</code>甚至<code>document</code>上。<strong>我们只需在这些需要处理事件元素的父级元素或更高级元素上设置事件监听，即可减少DOM访问次数以及函数对象的空间开销。</strong></p>
+<pre><code class="hljs javascript"><span class="hljs-keyword">let</span> list = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">&quot;myLinks&quot;</span>);
+      
+list.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span class="hljs-function">(<span class="hljs-params">event</span>) =&gt;</span> &#123;
+  <span class="hljs-keyword">let</span> target = event.target;
+      
+  <span class="hljs-keyword">switch</span>(target.id) &#123;
+    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;doSomething&quot;</span>:
+      <span class="hljs-built_in">document</span>.title = <span class="hljs-string">&quot;I changed the document&#x27;s title&quot;</span>;
+      <span class="hljs-keyword">break</span>;
+      
+    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;goSomewhere&quot;</span>:
+      location.href = <span class="hljs-string">&quot;http:// www.wrox.com&quot;</span>;
+      <span class="hljs-keyword">break</span>;
+      
+    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;sayHi&quot;</span>:
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&quot;hi&quot;</span>);
+      <span class="hljs-keyword">break</span>;
+  &#125;
+&#125;);</code></pre>
+<h2 id="优点"><a class="markdownIt-Anchor" href="#优点"></a> 优点</h2>
+<ol>
+<li>
+<p>如果这些事件挂载在<code>document</code>上，随时都能添加事件处理程序、减少延迟，页面渲染完就可用。</p>
+</li>
+<li>
+<p>节省设置时间、减少DOM引用。</p>
+</li>
+<li>
+<p>减少内存使用，提升整体性能。</p>
+</li>
+</ol>
+<h2 id="适用场景"><a class="markdownIt-Anchor" href="#适用场景"></a> 适用场景</h2>
+<p>事件委托适用于<code>click</code>、<code>mousedown</code>、<code>mouseup</code>、<code>keydown</code>、<code>keypress</code>等事件。</p>
+<h1 id="参考文献"><a class="markdownIt-Anchor" href="#参考文献"></a> 参考文献</h1>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://www.ruanyifeng.com/blog/2013/06/rsa_algorithm_part_one.html">阮一峰的网络日志 - RSA算法原理（一）</a></li>
-<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/28423720">知乎专栏 - SSH 免密登录是怎么玩儿的?<br />
-</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.runoob.com/w3cnote/set-ssh-login-key.html">Runoob - 设置 SSH 通过密钥登录</a></li>
-<li><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/SSH_keys_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)">Archlinux Wiki - SSH keys</a></li>
-<li><a target="_blank" rel="noopener" href="https://docs.github.com/cn/github/authenticating-to-github/working-with-ssh-key-passphrases">GitHub Docs - 添加或更改SSH密钥密码</a></li>
-<li><a target="_blank" rel="noopener" href="https://deepzz.com/post/how-to-setup-ssh-config.html">Deepzz - SSH Config 那些你所知道和不知道的事</a></li>
+<li>
+<p>JavaScript高级教程（第4版）第17章 - 事件</p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://www.w3.org/TR/DOM-Level-3-Events/#event-flow">W3C - UI Events</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1m7411L7YW">Bilibili - 技术蛋老师 - JavaScript事件捕获和事件冒泡</a></p>
+</li>
 </ul>
-<h1 id="future-direction"><a class="markdownIt-Anchor" href="#future-direction"></a> Future Direction</h1>
-<p>虽然SSH密钥登录相比于传统密码登录已经在安全性和方便性上提高了很多，但仍有一些不足，比如对于人多设备多的大型机构，如果有人员变动需要在所有服务器上删除该人员的公钥。SSH证书登录则解决了这种问题，并且更易管理、扩展性更强、安全性更高。参见<a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2020/07/ssh-certificate.html">阮一峰的网络日志 - SSH 证书登录教程</a>。</p>
 
             </div>
             <hr>
@@ -352,7 +405,7 @@ Identity added: /Users/your_name/.ssh/your_private_key</code></pre>
                   <div class="post-meta mr-3">
                     <i class="iconfont icon-category"></i>
                     
-                      <a class="hover-with-bg" href="/categories/%E5%B0%8F%E7%99%BD%E8%8F%9C%E7%9A%84%E5%BB%BA%E7%AB%99%E4%B9%8B%E8%B7%AF/">小白菜的建站之路</a>
+                      <a class="hover-with-bg" href="/categories/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91%E4%BD%BF%E6%88%91%E6%8E%89%E5%8F%91/">前端开发使我掉发</a>
                     
                   </div>
                 
@@ -360,21 +413,13 @@ Identity added: /Users/your_name/.ssh/your_private_key</code></pre>
                   <div class="post-meta">
                     <i class="iconfont icon-tags"></i>
                     
-                      <a class="hover-with-bg" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
+                      <a class="hover-with-bg" href="/tags/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91/">前端开发</a>
                     
-                      <a class="hover-with-bg" href="/tags/Terminal/">Terminal</a>
+                      <a class="hover-with-bg" href="/tags/JavaScript/">JavaScript</a>
                     
-                      <a class="hover-with-bg" href="/tags/SSH/">SSH</a>
+                      <a class="hover-with-bg" href="/tags/EMCAScript/">EMCAScript</a>
                     
-                      <a class="hover-with-bg" href="/tags/Linux/">Linux</a>
-                    
-                      <a class="hover-with-bg" href="/tags/%E8%BF%90%E7%BB%B4/">运维</a>
-                    
-                      <a class="hover-with-bg" href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/">服务器</a>
-                    
-                      <a class="hover-with-bg" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/">网络安全</a>
-                    
-                      <a class="hover-with-bg" href="/tags/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/">信息安全</a>
+                      <a class="hover-with-bg" href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8/">浏览器</a>
                     
                   </div>
                 
@@ -387,18 +432,12 @@ Identity added: /Users/your_name/.ssh/your_private_key</code></pre>
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2021/03/07/%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%E3%80%81%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%E3%80%81%E4%BA%8B%E4%BB%B6%E5%A7%94%E6%89%98/">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">事件冒泡、事件捕获、事件委托</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2021/01/21/How-to-Set-Pr0xy-for-Terminal-on-macOS/">
-                        <span class="hidden-mobile">How to Set Pr0xy for Terminal on macOS</span>
+                      <a href="/2021/02/16/SSH%E5%AF%86%E9%92%A5%E7%99%BB%E5%BD%95%E8%AE%BE%E7%BD%AE/">
+                        <span class="hidden-mobile">SSH密钥登录设置</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -652,7 +691,7 @@ Identity added: /Users/your_name/.ssh/your_private_key</code></pre>
       if ('true' === 'true') {
         var viewCtn = document.querySelector('#leancloud-post-views-container');
         if (viewCtn || enableIncr) {
-          var target = decodeURI('/2021/02/16/SSH%E5%AF%86%E9%92%A5%E7%99%BB%E5%BD%95%E8%AE%BE%E7%BD%AE/');
+          var target = decodeURI('/2021/03/07/%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%E3%80%81%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%E3%80%81%E4%BA%8B%E4%BB%B6%E5%A7%94%E6%89%98/');
           var viewGetter = getRecord(Counter, target).then((record) => {
             incrArr.push(buildIncrement(record.objectId))
             if (viewCtn) {
@@ -746,7 +785,7 @@ Identity added: /Users/your_name/.ssh/your_private_key</code></pre>
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "SSH密钥登录设置&nbsp;",
+        "事件冒泡、事件捕获、事件委托&nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,
