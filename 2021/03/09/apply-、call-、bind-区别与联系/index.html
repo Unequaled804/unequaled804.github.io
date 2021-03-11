@@ -17,7 +17,7 @@
   <meta name="description" content="">
   <meta name="author" content="Unequaled804">
   <meta name="keywords" content="">
-  <title>事件冒泡、事件捕获、事件委托 - Unequaled804</title>
+  <title>apply()、call()、bind()区别与联系 - Unequaled804</title>
 
   <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
 
@@ -150,7 +150,7 @@
 </nav>
 
     <div class="banner intro-2" id="background" parallax=true
-         style="background: url('/img/banner.png') no-repeat center center;
+         style="background: url('/img/apply-call-bind.png') no-repeat center center;
            background-size: cover;">
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
@@ -165,8 +165,8 @@
   
     <span class="post-meta">
       <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-      <time datetime="2021-03-07 10:40" pubdate>
-        2021年3月7日 上午
+      <time datetime="2021-03-09 21:21" pubdate>
+        2021年3月9日 晚上
       </time>
     </span>
   
@@ -177,7 +177,7 @@
     
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      1.5k 字
+      617 字
     </span>
   
 
@@ -187,7 +187,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      19
+      8
        分钟
     </span>
   
@@ -225,175 +225,96 @@
         <div class="py-5" id="board">
           <article class="post-content mx-auto" id="post">
             <!-- SEO header -->
-            <h1 style="display: none">事件冒泡、事件捕获、事件委托</h1>
+            <h1 style="display: none">apply()、call()、bind()区别与联系</h1>
             
             <div class="markdown-body" id="post-body">
-              <h1 id="事件冒泡与捕获"><a class="markdownIt-Anchor" href="#事件冒泡与捕获"></a> 事件冒泡与捕获</h1>
-<h2 id="概念"><a class="markdownIt-Anchor" href="#概念"></a> 概念</h2>
-<p>开发第四代Web浏览器时，开发团队都遇到了如何处理事件顺序的问题。就好比在一张纸上画出几个同心圆，手指按在中间圆的同时，也相当于按到了其他的圆。关于如何处理这些事件，当时的IE和Netscape团队给出了两种截然相反的事件流方案：</p>
+              <p>这三者都是<code>Function.prototype</code>中的方法，功能也很类似：<strong>改变函数中</strong><code>**this**</code><strong>的指向</strong>。</p>
+<h1 id="apply-call"><a class="markdownIt-Anchor" href="#apply-call"></a> apply() &amp; call()</h1>
+<p><code>apply()</code>和<code>call()</code>，可以说是几乎一样的，只是接受参数不同。前者以数组形式接收参数而后者以展开列表形式接收参数。比如：</p>
+<pre><code class="hljs javascript">func.apply(obj, [arg1, arg2, ..]);
+func.call(obj, arg1, arg2, ..)</code></pre>
+<p>都是相当于将函数<code>func</code>中的所有<code>this</code>替换为<code>obj</code>，并将<code>arg1, arg2, ..</code>作为函数入参然后<strong>执行函数</strong>。举个例子：</p>
+<pre><code class="hljs javascript"><span class="hljs-keyword">let</span> taxi_1 = &#123;
+	company: <span class="hljs-string">&#x27;Didi&#x27;</span>,
+	sound: <span class="hljs-string">&#x27;滴滴～&#x27;</span>
+&#125;
+
+<span class="hljs-keyword">let</span> taxi_2 = &#123;
+	company: <span class="hljs-string">&#x27;Delamain&#x27;</span>,
+	sound: <span class="hljs-string">&#x27;滴滴！你个王八蛋！&#x27;</span>
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">horn</span>(<span class="hljs-params">id, type</span>) </span>&#123;
+	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">`<span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.company&#125;</span>公司的<span class="hljs-subst">$&#123;type&#125;</span>-<span class="hljs-subst">$&#123;id&#125;</span>正在鸣笛：<span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.sound&#125;</span>`</span>)
+&#125;
+
+horn.call(taxi_1, <span class="hljs-number">89757</span> , <span class="hljs-string">&quot;出租车&quot;</span>);    <span class="hljs-comment">// Didi公司的出租车-89757正在鸣笛：滴滴～</span>
+horn.apply(taxi_2, [<span class="hljs-number">60001</span> , <span class="hljs-string">&quot;出租车&quot;</span>]); <span class="hljs-comment">// Delamain公司的出租车-60001正在鸣笛：滴滴！你个王八蛋！</span></code></pre>
+<h2 id="应用场景"><a class="markdownIt-Anchor" href="#应用场景"></a> 应用场景</h2>
+<ol>
+<li>这种使用它们改变<code>this</code>指向的功能，常被用于<strong>盗用构造函数</strong>来<strong>继承父类</strong>（Demo来源于MDN）:</li>
+</ol>
+<pre><code class="hljs javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Product</span>(<span class="hljs-params">name, price</span>) </span>&#123;
+  <span class="hljs-built_in">this</span>.name = name;
+  <span class="hljs-built_in">this</span>.price = price;
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Food</span>(<span class="hljs-params">name, price</span>) </span>&#123;
+  Product.call(<span class="hljs-built_in">this</span>, name, price);
+  <span class="hljs-built_in">this</span>.category = <span class="hljs-string">&#x27;food&#x27;</span>;
+&#125;
+
+<span class="hljs-built_in">console</span>.log(<span class="hljs-keyword">new</span> Food(<span class="hljs-string">&#x27;cheese&#x27;</span>, <span class="hljs-number">5</span>)); <span class="hljs-comment">// &lt; Food &#123;name: &quot;cheese&quot;, price: 5, category: &quot;food&quot;&#125;</span></code></pre>
+<ol start="2">
+<li>还可以被用来替代<strong>扩展运算符<code>...</code></strong>：</li>
+</ol>
+<pre><code class="hljs javascript"><span class="hljs-built_in">Math</span>.max([<span class="hljs-number">1</span>,<span class="hljs-number">2</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>]); <span class="hljs-comment">// &lt; NaN</span>
+<span class="hljs-built_in">Math</span>.max.apply(<span class="hljs-literal">null</span>, [<span class="hljs-number">1</span>,<span class="hljs-number">2</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>]); <span class="hljs-comment">// &lt; 5</span>
+<span class="hljs-comment">// 等价于以下写法</span>
+<span class="hljs-built_in">Math</span>.max(...[<span class="hljs-number">1</span>,<span class="hljs-number">2</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>]); <span class="hljs-comment">// &lt; 5</span>
+<span class="hljs-built_in">Math</span>.max(<span class="hljs-number">1</span>,<span class="hljs-number">2</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>); <span class="hljs-comment">// &lt; 5</span></code></pre>
+<h1 id="bind"><a class="markdownIt-Anchor" href="#bind"></a> bind()</h1>
+<p><code>bind()</code>也起到改变this指向的作用，和<code>call()</code>最相似（参数都是列表），但有两点不同：</p>
+<ol>
+<li>
+<p><code>bind()</code>不会执行函数，只会<strong>返回一个新的函数</strong>。</p>
+</li>
+<li>
+<p><code>bind()</code>后返回的<strong>新函数入参对象和函数是硬绑定的（hard-fixed），无法再改变内部this指向</strong>。</p>
+</li>
+</ol>
+<p>有点蒙？看看例子：</p>
+<pre><code class="hljs javascript"><span class="hljs-keyword">let</span> taxi_1 = &#123;
+	company: <span class="hljs-string">&#x27;Didi&#x27;</span>,
+	sound: <span class="hljs-string">&#x27;滴滴～&#x27;</span>
+&#125;
+
+<span class="hljs-keyword">let</span> taxi_2 = &#123;
+	company: <span class="hljs-string">&#x27;Delamain&#x27;</span>,
+	sound: <span class="hljs-string">&#x27;滴滴！你个王八蛋！&#x27;</span>
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">horn</span>(<span class="hljs-params">id, type</span>) </span>&#123;
+	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">`<span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.company&#125;</span>公司的<span class="hljs-subst">$&#123;type&#125;</span>-<span class="hljs-subst">$&#123;id&#125;</span>正在鸣笛：<span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.sound&#125;</span>`</span>)
+&#125;
+
+<span class="hljs-keyword">let</span> delamainHorn = horn.bind(taxi_2, <span class="hljs-number">69757</span> , <span class="hljs-string">&quot;出租车&quot;</span>);
+delamainHorn();                              <span class="hljs-comment">// Delamain公司的出租车-69757正在鸣笛：滴滴！你个王八蛋！</span>
+delamainHorn.call(taxi_1, <span class="hljs-number">10001</span> , <span class="hljs-string">&quot;出租车&quot;</span>);  <span class="hljs-comment">// Delamain公司的出租车-69757正在鸣笛：滴滴！你个王八蛋！</span>
+<span class="hljs-comment">// 输出相同，this指向锁定。</span></code></pre>
+<h1 id="参考资料"><a class="markdownIt-Anchor" href="#参考资料"></a> 参考资料</h1>
 <ul>
 <li>
-<p>事件冒泡（IE）：事件从<strong>最具体的元素</strong>一直向上传播直到<strong>Window/Document</strong>。</p>
+<p><a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Function/apply"><strong>MDN - Function.prototype.apply()</strong></a></p>
 </li>
 <li>
-<p>事件捕获（Netscape）：事件从<strong>Window/Document</strong>一直向下传播直到<strong>最具体的元素</strong>。</p>
-</li>
-</ul>
-<h2 id="现代浏览器中的事件流"><a class="markdownIt-Anchor" href="#现代浏览器中的事件流"></a> 现代浏览器中的事件流</h2>
-<p><img src="/img/event-flow.png" srcset="/img/loading.gif" alt="" /></p>
-<p>现代浏览器对两种事件流的方案都有支持，如上图所示（源：W3C文档），整个事件流分为三个阶段：<strong>捕获阶段</strong>、<strong>目标阶段</strong>、<strong>冒泡阶段</strong>。</p>
-<h2 id="dom0-事件处理程序"><a class="markdownIt-Anchor" href="#dom0-事件处理程序"></a> DOM0 事件处理程序</h2>
-<p>DOM0 Events 中为DOM元素添加事件处理程序，是将其事件属性值（如<code>onclick</code> ）直接赋值给一个函数；而取消事件则直接将其赋值为<code>null</code>。</p>
-<pre><code class="hljs javascript"><span class="hljs-keyword">const</span> btn = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">&#x27;mybtn&#x27;</span>);
-
-<span class="hljs-comment">// 添加事件处理程序</span>
-btn.onclick = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>&#123;
-	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">`The button <span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.id&#125;</span> is clicked!`</span>); 
-	<span class="hljs-comment">// &#x27;The button mybtn is clicked!&#x27; (this指向元素本身)</span>
-&#125;
-
-<span class="hljs-comment">// 移除事件处理程序</span>
-btn.onclick = <span class="hljs-literal">null</span>;</code></pre>
-<p>DOM0 事件处理程序<strong>只支持冒泡</strong></p>
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">onclick</span>=<span class="hljs-string">&quot;console.log(&#x27;div is clicked!&#x27;)&quot;</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">span</span> <span class="hljs-attr">onclick</span>=<span class="hljs-string">&quot;console.log(&#x27;span is clicked!&#x27;)&quot;</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">onclick</span>=<span class="hljs-string">&quot;console.log(&#x27;button is clicked!&#x27;)&quot;</span>&gt;</span>
-      Click Me!
-    <span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
-  <span class="hljs-tag">&lt;/<span class="hljs-name">span</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></code></pre>
-<p>点击后按钮后可以看到事件触发顺序是从<code>&lt;button&gt;</code>到最外层<code>&lt;div&gt;</code></p>
-<p><img src="/img/event-flow-demo-1.png" srcset="/img/loading.gif" alt="" /></p>
-<h2 id="dom2-事件处理程序"><a class="markdownIt-Anchor" href="#dom2-事件处理程序"></a> DOM2 事件处理程序</h2>
-<p>DOM2 Events添加了两个方法用于为DOM元素添加和移除事件处理程序：<code>addEventListener()</code> 和 <code>removeEventListener()</code></p>
-<p>具体用法：</p>
-<pre><code class="hljs javascript">element.addEventListener(type, handler[, useCapture = <span class="hljs-literal">false</span>]);
-element.removeEventListener(type, handler[, useCapture = <span class="hljs-literal">false</span>]);
-
-<span class="hljs-comment">// type: event名称，如&#x27;click&#x27;, &#x27;mousemove&#x27;等</span>
-<span class="hljs-comment">// handler: 具体的处理函数</span>
-<span class="hljs-comment">// useCapture: 可选，是否为捕获阶段触发，默认为false（即默认冒泡阶段触发）</span></code></pre>
-<p>使用的时候需要注意两点：</p>
-<ol>
-<li>
-<p><strong>不要使用匿名函数！</strong> 否则无法移除事件处理程序！</p>
+<p><a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Function/bind"><strong>MDN - Function.prototype.bind()</strong></a></p>
 </li>
 <li>
-<p>移除事件处理程序时，参数要与设置事件处理程序时完全一致！（因为一个事件可以注册多个处理程序，并且在捕获和冒泡阶段都可以，浏览器需要知道到底移除哪个阶段的哪个程序）</p>
-</li>
-</ol>
-<p>举个🌰</p>
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">span</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&#x27;myspan&#x27;</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&#x27;mybtn&#x27;</span>&gt;</span>
-      Click Me!
-    <span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
-  <span class="hljs-tag">&lt;/<span class="hljs-name">span</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-</code></pre>
-<pre><code class="hljs javascript"><span class="hljs-keyword">const</span> span = <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-string">&#x27;#myspan&#x27;</span>);
-<span class="hljs-keyword">const</span> btn = <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-string">&#x27;#mybtn&#x27;</span>);
-
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler1</span> (<span class="hljs-params">e</span>) </span>&#123;
-	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">`before btn clicked! from <span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.id&#125;</span>`</span>);
-&#125;
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler2</span> (<span class="hljs-params">e</span>) </span>&#123;
-	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">`btn is clicked! from <span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.id&#125;</span>`</span>);
-&#125;
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler3</span> (<span class="hljs-params">e</span>) </span>&#123;
-	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">`after btn clicked! from <span class="hljs-subst">$&#123;<span class="hljs-built_in">this</span>.id&#125;</span>`</span>);
-&#125;
-
-span.addEventListener(<span class="hljs-string">&#x27;click&#x27;</span>, handler1, <span class="hljs-literal">true</span>);
-btn.addEventListener(<span class="hljs-string">&#x27;click&#x27;</span>, handler2, <span class="hljs-literal">false</span>);
-span.addEventListener(<span class="hljs-string">&#x27;click&#x27;</span>, handler3);</code></pre>
-<p><img src="/img/event-flow-demo-2.png" srcset="/img/loading.gif" alt="" /></p>
-<p>我们可以看到点击按钮后，点击事件先被<code>myspan</code><strong>捕获</strong>并触发<code>handler1</code>，再传递到<code>mybtn</code>触发<code>handler2</code>，最终<strong>冒泡</strong>回<code>myspan</code>触发<code>handler3</code>。</p>
-<p>如果需要移除点击事件，<code>addEventListener</code>时的<strong>所有参数都要提供哦</strong>。</p>
-<pre><code class="hljs javascript">btn.removeEventListener(<span class="hljs-string">&#x27;click&#x27;</span>, handler2, <span class="hljs-literal">false</span>);</code></pre>
-<h2 id="阻止冒泡与捕获"><a class="markdownIt-Anchor" href="#阻止冒泡与捕获"></a> 阻止冒泡与捕获</h2>
-<p>在实际开发的过程中我们可能会遇到两个重叠元素都添加了点击事件，点击的时候因为冒泡/捕获会触发另一个不应该触发的元素的点击操作，此时可在handler函数中使用</p>
-<p><code>event.stopPropagation()</code></p>
-<p>来阻止当前触发节点之后的默认冒泡/捕获流。</p>
-<h1 id="事件委托事件代理"><a class="markdownIt-Anchor" href="#事件委托事件代理"></a> 事件委托（事件代理）</h1>
-<h2 id="背景"><a class="markdownIt-Anchor" href="#背景"></a> 背景</h2>
-<p>假如我们有如下列表，想点击每个项目做不同的操作（例子来源于JavaScript高级教程）</p>
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">ul</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;myLinks&quot;</span>&gt;</span>
-	<span class="hljs-tag">&lt;<span class="hljs-name">li</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;goSomewhere&quot;</span>&gt;</span>Go somewhere<span class="hljs-tag">&lt;/<span class="hljs-name">li</span>&gt;</span>
-	<span class="hljs-tag">&lt;<span class="hljs-name">li</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;doSomething&quot;</span>&gt;</span>Do something<span class="hljs-tag">&lt;/<span class="hljs-name">li</span>&gt;</span>
-	<span class="hljs-tag">&lt;<span class="hljs-name">li</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;sayHi&quot;</span>&gt;</span>Say hi<span class="hljs-tag">&lt;/<span class="hljs-name">li</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">ul</span>&gt;</span></code></pre>
-<p>正常来讲需要给每个需要添加点击事件处理程序的节点挨个设置事件监听</p>
-<pre><code class="hljs javascript"><span class="hljs-keyword">let</span> item1 = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">&quot;goSomewhere&quot;</span>);
-<span class="hljs-keyword">let</span> item2 = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">&quot;doSomething&quot;</span>);
-<span class="hljs-keyword">let</span> item3 = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">&quot;sayHi&quot;</span>);
-      
-item1.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span class="hljs-function">(<span class="hljs-params">event</span>) =&gt;</span> &#123;
-  location.href = <span class="hljs-string">&quot;http:// www.wrox.com&quot;</span>;
-&#125;);
-      
-item2.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span class="hljs-function">(<span class="hljs-params">event</span>) =&gt;</span> &#123;
-  <span class="hljs-built_in">document</span>.title = <span class="hljs-string">&quot;I changed the document&#x27;s title&quot;</span>;
-&#125;);
-      
-item3.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span class="hljs-function">(<span class="hljs-params">event</span>) =&gt;</span> &#123;
-  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&quot;hi&quot;</span>);
-&#125;);</code></pre>
-<p>但是这样做会有一些弊端：</p>
-<ol>
-<li>
-<p>首先是每个函数都是对象，都会占用内存空间。对象越多，性能越差。</p>
+<p><a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Function/call"><strong>MDN - Function.prototype.call()</strong></a></p>
 </li>
 <li>
-<p>其次多次访问DOM元素可能在一开始会造成页面交互延迟。</p>
-</li>
-</ol>
-<p>事件委托应运而生。</p>
-<h2 id="概念-2"><a class="markdownIt-Anchor" href="#概念-2"></a> 概念</h2>
-<p>其实事件委托的概念很简单，因为事件流都有冒泡阶段，一定范围内DOM元素的事件都会冒泡到他们父级元素上。在这个例子中就是这些<code>&lt;li&gt;</code>最后都会冒泡到<code>&lt;ul&gt;</code>甚至<code>document</code>上。<strong>我们只需在这些需要处理事件元素的父级元素或更高级元素上设置事件监听，即可减少DOM访问次数以及函数对象的空间开销。</strong></p>
-<pre><code class="hljs javascript"><span class="hljs-keyword">let</span> list = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">&quot;myLinks&quot;</span>);
-      
-list.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span class="hljs-function">(<span class="hljs-params">event</span>) =&gt;</span> &#123;
-  <span class="hljs-keyword">let</span> target = event.target;
-      
-  <span class="hljs-keyword">switch</span>(target.id) &#123;
-    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;doSomething&quot;</span>:
-      <span class="hljs-built_in">document</span>.title = <span class="hljs-string">&quot;I changed the document&#x27;s title&quot;</span>;
-      <span class="hljs-keyword">break</span>;
-      
-    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;goSomewhere&quot;</span>:
-      location.href = <span class="hljs-string">&quot;http:// www.wrox.com&quot;</span>;
-      <span class="hljs-keyword">break</span>;
-      
-    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;sayHi&quot;</span>:
-      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&quot;hi&quot;</span>);
-      <span class="hljs-keyword">break</span>;
-  &#125;
-&#125;);</code></pre>
-<h2 id="优点"><a class="markdownIt-Anchor" href="#优点"></a> 优点</h2>
-<ol>
-<li>
-<p>如果这些事件挂载在<code>document</code>上，随时都能添加事件处理程序、减少延迟，页面渲染完就可用。</p>
-</li>
-<li>
-<p>节省设置时间、减少DOM引用。</p>
-</li>
-<li>
-<p>减少内存使用，提升整体性能。</p>
-</li>
-</ol>
-<h2 id="适用场景"><a class="markdownIt-Anchor" href="#适用场景"></a> 适用场景</h2>
-<p>事件委托适用于<code>click</code>、<code>mousedown</code>、<code>mouseup</code>、<code>keydown</code>、<code>keypress</code>等事件。</p>
-<h1 id="参考文献"><a class="markdownIt-Anchor" href="#参考文献"></a> 参考文献</h1>
-<ul>
-<li>
-<p>JavaScript高级教程（第4版）第17章 - 事件</p>
-</li>
-<li>
-<p><a target="_blank" rel="noopener" href="https://www.w3.org/TR/DOM-Level-3-Events/#event-flow">W3C - UI Events</a></p>
-</li>
-<li>
-<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1m7411L7YW">Bilibili - 技术蛋老师 - JavaScript事件捕获和事件冒泡</a></p>
+<p><a target="_blank" rel="noopener" href="https://zh.javascript.info/bind"><strong>现代 JavaScript 教程 - 函数绑定</strong></a></p>
 </li>
 </ul>
 
@@ -419,8 +340,6 @@ list.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span 
                     
                       <a class="hover-with-bg" href="/tags/EMCAScript/">EMCAScript</a>
                     
-                      <a class="hover-with-bg" href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8/">浏览器</a>
-                    
                   </div>
                 
               </div>
@@ -432,18 +351,12 @@ list.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span 
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2021/03/09/apply-%E3%80%81call-%E3%80%81bind-%E5%8C%BA%E5%88%AB%E4%B8%8E%E8%81%94%E7%B3%BB/">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">apply()、call()、bind()区别与联系</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2021/02/16/SSH%E5%AF%86%E9%92%A5%E7%99%BB%E5%BD%95%E8%AE%BE%E7%BD%AE/">
-                        <span class="hidden-mobile">SSH密钥登录设置</span>
+                      <a href="/2021/03/07/%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%E3%80%81%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%E3%80%81%E4%BA%8B%E4%BB%B6%E5%A7%94%E6%89%98/">
+                        <span class="hidden-mobile">事件冒泡、事件捕获、事件委托</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -697,7 +610,7 @@ list.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span 
       if ('true' === 'true') {
         var viewCtn = document.querySelector('#leancloud-post-views-container');
         if (viewCtn || enableIncr) {
-          var target = decodeURI('/2021/03/07/%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%E3%80%81%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%E3%80%81%E4%BA%8B%E4%BB%B6%E5%A7%94%E6%89%98/');
+          var target = decodeURI('/2021/03/09/apply-%E3%80%81call-%E3%80%81bind-%E5%8C%BA%E5%88%AB%E4%B8%8E%E8%81%94%E7%B3%BB/');
           var viewGetter = getRecord(Counter, target).then((record) => {
             incrArr.push(buildIncrement(record.objectId))
             if (viewCtn) {
@@ -791,7 +704,7 @@ list.addEventListener(<span class="hljs-string">&quot;click&quot;</span>, <span 
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "事件冒泡、事件捕获、事件委托&nbsp;",
+        "apply()、call()、bind()区别与联系&nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,
